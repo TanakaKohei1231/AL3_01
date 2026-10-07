@@ -14,6 +14,8 @@ struct StageData {
 /// </summary>
 class StageManager {
   public:
+	static StageManager *GetInstance();
+
 	/// <summary>
 	/// ステージデータファイルの読み込み
 	/// </summary>
@@ -59,10 +61,19 @@ class StageManager {
 	/// </summary>
 	/// <returns>現在ステージ番号</returns>
 	int32_t GetCurrentStageIndex() const { return currentStageIndex_; }
+
+	// コピーコンストラクタと代入演算子を削除してシングルトンパターンにする
+	StageManager(const StageManager&) = delete;
+	StageManager& operator=(const StageManager&) = delete;
+
   private:
 	// 全ステージデータ
 	std::vector<StageData> stageDatas_;
 
 	// 現在のステージ番号
 	int32_t currentStageIndex_ = 0;
+
+	// シングルトンパターンにするためのコンストラクタとデストラクタをprivateにする
+	StageManager() = default;
+	~StageManager() = default;
 };

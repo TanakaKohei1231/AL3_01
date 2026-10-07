@@ -26,9 +26,6 @@ GameScene* gameScene = nullptr;
 // タイトルシーン
 TitleScene* titleScene = nullptr;
 
-// ステージマネージャー
-StageManager* stageManager = nullptr;
-
 // シーン切り替え
 void ChangeScene();
 
@@ -52,11 +49,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// ImGuiManagerインスタンスの取得
 	ImGuiManager* imGuiManager = ImGuiManager::GetInstance();
 
-	// ステージマネージャの生成
-	stageManager = new StageManager();
-
 	// ステージデータファイルを読み込む
-	stageManager->LoadStageDataCsv();
+	StageManager::GetInstance()->LoadStageDataCsv();
 
 	#ifdef _DEBUG
 
@@ -119,11 +113,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	delete gameScene;
 	gameScene = nullptr;
 
-	// ステージマネージャーの開放
-	delete stageManager;
-	stageManager = nullptr;
-
-
 	// エンジンの終了処理
 	::Finalize();
 
@@ -143,7 +132,7 @@ void ChangeScene() {
 
 			// 新シーンの生成
 			gameScene = new GameScene();
-			gameScene->Initialize(stageManager);
+			gameScene->Initialize();
 		}
 		break;
 
@@ -174,7 +163,7 @@ void ChangeScene() {
 
 			// 新シーンの生成
 			gameScene = new GameScene();
-			gameScene->Initialize(stageManager);
+			gameScene->Initialize();
 		}
 
 		break;
@@ -238,7 +227,7 @@ void LoadDebugSettings() {
 
 	while (file >> key >> value) {
 		if (key == "InitialStage") {
-			stageManager->SetCurrentStageIndexByName(value);
+			StageManager::GetInstance()->SetCurrentStageIndexByName(value);
 		}
 	}
 }

@@ -13,13 +13,12 @@
 
 // 前方宣言
 class HitEffect;
-class StageManager;
 
 // ゲームシーン
 class GameScene {
  public:
 	// 初期化処理
-	void Initialize(StageManager* stageManager);
+	void Initialize();
 
 	// 更新処理
 	void Update();
@@ -74,9 +73,6 @@ class GameScene {
 
 	// マップチップフィールド
 	MapChipField *mapChipField_ = nullptr;
-
-	// ステージマネージャ参照用ポインタ
-	StageManager *stageManager_ = nullptr;
 
 	// カメラ
 	KamataEngine::Camera camera_;

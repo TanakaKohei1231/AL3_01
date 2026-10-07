@@ -2,6 +2,12 @@
 #include <fstream>
 #include <sstream>
 
+StageManager* StageManager::GetInstance() {
+	static StageManager instance;
+
+	return &instance;
+}
+
 void StageManager::LoadStageDataCsv() {
 	// ステージデータファイルのパス
 	const std::string filePath = "fieldsData/stageDatas.csv";

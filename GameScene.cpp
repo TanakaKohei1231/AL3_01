@@ -18,11 +18,7 @@ enum class EnemySpawnType : uint8_t {
 
 } // namespace
 
-void GameScene::Initialize(StageManager* stageManager) {
-	// 引数をメンバ変数に記録する
-	stageManager_ = stageManager;
-	assert(stageManager_);
-
+void GameScene::Initialize() {
 	// フェーズ初期化
 	isFinished_ = false;
 	phase_ = Phase::kFadeIn;
@@ -45,7 +41,7 @@ void GameScene::Initialize(StageManager* stageManager) {
 	mapChipField_ = new MapChipField();
 
 	// 現在のステージデータを取得する
-	const StageData& stageData = stageManager_->GetCurrentStageData();
+	const StageData& stageData = StageManager::GetInstance()->GetCurrentStageData();
 
 	// ステージファイルパスの生成
 	std::string stageFileName = "fieldsData/" + stageData.name + ".csv";

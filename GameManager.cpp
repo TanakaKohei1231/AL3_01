@@ -13,6 +13,7 @@ void GameManager::Initialize() {
 
 	#ifdef _DEBUG
 
+	//デバッグ設定ファイルの読み込み
 	LoadDebugSettings();
 
 	#endif // _DEBUG
@@ -21,7 +22,7 @@ void GameManager::Initialize() {
 	GlobalVariables::GetInstance()->LoadFiles();
 
 	// タイトルシーンを生成
-	ChangeScene(SCENE::TITLE);
+	ChangeScene(SCENE::kTitle);
 }
 
 void GameManager::Update() {
@@ -32,16 +33,9 @@ void GameManager::Update() {
 	scene_->Update();
 
 	// シーンが変更リクエストを出している場合は、シーンを切り替える
-	if (sceneNo_ != scene_->GetNextSceneNo()) {
+	// nextSceneがkUnknownの間はシーン変更リクエストが出ていない扱い
+	if (scene_->GetNextSceneNo() != SCENE::kUnknown) {
 		ChangeScene(scene_->GetNextSceneNo());
-
-		// ホットリロードのリクエストがある場合
-	} else if (scene_->GetReloadRequest()) {
-		// グローバル変数の再読み込み
-		GlobalVariables::GetInstance()->LoadFiles();
-
-		// 現在のシーンを再生成
-		ChangeScene(sceneNo_);
 	}
 
 	// グローバル変数の更新
@@ -57,14 +51,16 @@ void GameManager::ChangeScene(SCENE newScene) {
 	sceneNo_ = newScene;
 
 	switch (sceneNo_) {
-	case SCENE::TITLE:
+	case SCENE::kTitle:
 
 		scene_ = std::make_unique<TitleScene>();
 
 		break;
 
 
-	case SCENE::GAME:
+	case SCENE::kGame:
+		// グローバル変数の読み込み
+		GlobalVariables::GetInstance()->LoadFiles();
 
 		scene_ = std::make_unique<GameScene>();
 

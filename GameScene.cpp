@@ -19,9 +19,6 @@ enum class EnemySpawnType : uint8_t {
 } // namespace
 
 void GameScene::Initialize() {
-	// 次のシーンの初期化
-	nextScene_ = SCENE::GAME;
-
 	// フェーズ初期化
 	phase_ = Phase::kFadeIn;
 
@@ -129,7 +126,7 @@ void GameScene::Update() {
 
 	// リロードボタン
 	if (ImGui::Button("Reload")) {
-		reloadRequested_ = true;
+		nextScene_ = SCENE::kGame;
 	}
 
 	// 追従カメラ起動ボタン
@@ -442,7 +439,7 @@ void GameScene::ChangePhase() {
 
 	case Phase::kFadeOut:
 		if (fade_->IsFinished()) {
-			nextScene_ = SCENE::TITLE;
+			nextScene_ = SCENE::kTitle;
 		}
 		break;
 	}

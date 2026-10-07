@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # 3DモデルのOBJはGit管理する
 !Resources/**/*.obj
+
+# imgui.iniをGit管理しない
+imgui.ini

@@ -10,7 +10,7 @@ public:
 
 private:
 	std::unique_ptr<IScene> scene_;
-	SCENE sceneNo_ = SCENE::TITLE;
+	SCENE sceneNo_ = SCENE::kTitle;
 
 	// シーンを切り替える関数
 	void ChangeScene(SCENE newSceneNo);

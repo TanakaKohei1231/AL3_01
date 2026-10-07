@@ -27,9 +27,6 @@ class GameScene : public IScene {
 	// 描画処理
 	void Draw() override;
 
-	// リロードするか
-	bool GetReloadRequest() const override { return reloadRequested_; }
-
 	GameScene();
 	~GameScene();
 
@@ -91,9 +88,6 @@ class GameScene : public IScene {
 
 	// 現在のフェーズ
 	Phase phase_ = Phase::kFadeIn;
-
-	// リロード要求フラグ
-	bool reloadRequested_ = false;
 
 	// フェード
 	Fade* fade_ = nullptr;

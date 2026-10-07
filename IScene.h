@@ -1,10 +1,11 @@
 #pragma once
 
 enum class SCENE {
-	TITLE,
-	GAME,
-	CLEAR,
-	kCountOfScene
+	kTitle,
+	kGame,
+	KClear,
+	kCountOfScene,
+	kUnknown // nextSceneがkUnknownの間はシーン変更リクエストが来ていない扱い
 };
 
 class IScene {
@@ -17,8 +18,6 @@ class IScene {
 
 	SCENE GetNextSceneNo() const { return nextScene_; }
 
-	virtual bool GetReloadRequest() const { return false; }
-
   protected:
-	SCENE nextScene_;
+	SCENE nextScene_ = SCENE::kUnknown;
 };

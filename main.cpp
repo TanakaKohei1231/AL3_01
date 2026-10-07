@@ -4,6 +4,7 @@
 #include "TitleScene.h"
 #include "StageManager.h"
 #include "GlobalVariables.h"
+#include "GameInput.h"
 #include <fstream>
 #include <string>
 
@@ -43,7 +44,7 @@ void LoadDebugSettings();
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// エンジンの初期化
-	::Initialize(L"LE2C_14_タナカ_コウヘイ");
+	::Initialize(L"LE2C_18_タナカ_コウヘイ");
 	
 	// DirectXCommonインスタンスの取得
 	DirectXCommon* dXCommon = DirectXCommon::GetInstance();
@@ -78,6 +79,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		if (Update()) {
 			break;
 		}
+
+		GameInput::GetInstance()->Update();
 
 		// ImGui受付開始
 		imGuiManager->Begin();

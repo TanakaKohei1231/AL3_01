@@ -8,7 +8,7 @@
 using namespace KamataEngine;
 
 void TitleScene::Initialize() {
-	finished_ = false;
+	nextScene_ = SCENE::TITLE;
 	phase_ = Phase::kFadeIn;
 	animationTimer_ = 0.0f;
 
@@ -84,7 +84,7 @@ void TitleScene::Update() {
 		fade_->Update();
 
 		if (fade_->IsFinished()) {
-			finished_ = true;
+			nextScene_ = SCENE::GAME;
 		}
 		break;
 	}

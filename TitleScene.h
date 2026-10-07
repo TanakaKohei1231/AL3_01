@@ -1,26 +1,22 @@
 #pragma once
 #include "KamataEngine.h"
 #include "Fade.h"
+#include "IScene.h"
 
-class TitleScene {
+class TitleScene : public IScene {
   public:
 	// 初期化処理
-	void Initialize();
+	  void Initialize() override;
 
 	// 更新処理
-	void Update();
+	void Update() override;
 
 	// 描画処理
-	void Draw();
-
-	// 終了したか
-	bool IsFinished() const { return finished_; }
+	void Draw() override;
 
 	~TitleScene();
 
   private:
-	// 終了フラグ
-	bool finished_ = false;
 
 	// シーンのフェーズ
 	enum class Phase {

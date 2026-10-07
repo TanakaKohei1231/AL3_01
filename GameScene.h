@@ -1,5 +1,6 @@
 #pragma once
 #include"KamataEngine.h"
+#include "IScene.h"
 #include"Player.h"
 #include "BaseEnemy.h"
 #include "Skydome.h"
@@ -15,24 +16,19 @@
 class HitEffect;
 
 // ゲームシーン
-class GameScene {
+class GameScene : public IScene {
  public:
 	// 初期化処理
-	void Initialize();
+	void Initialize() override;
 
 	// 更新処理
-	void Update();
+	void Update() override;
 
 	// 描画処理
-	void Draw();
-
-	void GenerateFieldObjects();
-
-	// 終了したか
-	bool IsFinished() const { return isFinished_; }
+	void Draw() override;
 
 	// リロードするか
-	bool GetReloadRequest() const { return reloadRequested_; }
+	bool GetReloadRequest() const override { return reloadRequested_; }
 
 	GameScene();
 	~GameScene();
@@ -96,9 +92,6 @@ class GameScene {
 	// 現在のフェーズ
 	Phase phase_ = Phase::kFadeIn;
 
-	// 終了フラグ
-	bool isFinished_ = false;
-
 	// リロード要求フラグ
 	bool reloadRequested_ = false;
 
@@ -128,6 +121,9 @@ class GameScene {
 
 	// 敵を生成
 	void GenerateEnemy(KamataEngine::Vector3 &position,uint8_t type);
+
+	// フィールドの全オブジェクトを生成
+	void GenerateFieldObjects();
 
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
 

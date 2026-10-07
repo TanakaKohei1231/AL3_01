@@ -1,42 +1,9 @@
 #include <Windows.h>
 #include"KamataEngine.h"
-#include"GameScene.h"
-#include "TitleScene.h"
-#include "StageManager.h"
-#include "GlobalVariables.h"
-#include "GameInput.h"
-#include <fstream>
-#include <string>
+#include "GameManager.h"
 
 using namespace KamataEngine;
 
-// シーン
-enum class Scene {
-	kUnknown = 0,
-	kTitle,
-	kGame,
-};
-
-// 現在シーン
-Scene scene = Scene::kUnknown;
-
-// ゲームシーン
-GameScene* gameScene = nullptr;
-
-// タイトルシーン
-TitleScene* titleScene = nullptr;
-
-// シーン切り替え
-void ChangeScene();
-
-// シーン更新
-void UpdateScene();
-
-// シーン描画
-void DrawScene();
-
-// デバッグ設定ファイルの読み込み
-void LoadDebugSettings();
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
@@ -49,23 +16,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// ImGuiManagerインスタンスの取得
 	ImGuiManager* imGuiManager = ImGuiManager::GetInstance();
 
-	// ステージデータファイルを読み込む
-	StageManager::GetInstance()->LoadStageDataCsv();
-
-	#ifdef _DEBUG
-
-	LoadDebugSettings();
-
-	#endif // _DEBUG
-
-
-	// 起動時のグローバル変数の読み込み
-	GlobalVariables::GetInstance()->LoadFiles();
-
-	// 最初のシーン
-	scene = Scene::kTitle;
-	titleScene = new TitleScene();
-	titleScene->Initialize();
+	// ゲームマネージャーの生成
+	std::unique_ptr<GameManager> gameManager = std::make_unique<GameManager>();
+	gameManager->Initialize();
 
 	// メインループ
 	while (true) {
@@ -74,30 +27,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			break;
 		}
 
-		GameInput::GetInstance()->Update();
-
 		// ImGui受付開始
 		imGuiManager->Begin();
 
-		// シーン切り替え
-		ChangeScene();
-
-		// 現在シーンの更新
-		UpdateScene();
-
-		GlobalVariables::GetInstance()->Update();
+		// ゲームマネージャーの更新
+		gameManager->Update();
 
 		// ImGui受付終了
 		imGuiManager->End();
-
 
 		// 描画開始
 		dXCommon->PreDraw();
 
 		// ここに描画処理を記述
 
-		// 現在シーンの描画
-		DrawScene();
+		// ゲームマネージャーの描画
+		gameManager->Draw();
 
 		// ImGui描画
 		imGuiManager->Draw();
@@ -106,128 +51,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		dXCommon->PostDraw();
 	}
 
-	// シーンの解放
-	delete titleScene;
-	titleScene = nullptr;
-
-	delete gameScene;
-	gameScene = nullptr;
+	// GameManager以下をすべて破棄
+	gameManager.reset();
 
 	// エンジンの終了処理
 	::Finalize();
 
 	return 0;
-}
-
-void ChangeScene() {
-	switch (scene) {
-	case Scene::kTitle:
-		if (titleScene && titleScene->IsFinished()) {
-			// シーン変更
-			scene = Scene::kGame;
-
-			// 旧シーンの解放
-			delete titleScene;
-			titleScene = nullptr;
-
-			// 新シーンの生成
-			gameScene = new GameScene();
-			gameScene->Initialize();
-		}
-		break;
-
-	case Scene::kGame:
-
-		// シーン終了処理
-		if (gameScene && gameScene->IsFinished()) {
-			// シーン変更
-			scene = Scene::kTitle;
-
-			// 旧シーンの解放
-			delete gameScene;
-			gameScene = nullptr;
-
-			// 新シーンの生成と初期化
-			titleScene = new TitleScene();
-			titleScene->Initialize();
-
-
-			// ホットリロード
-		} else if (gameScene && gameScene->GetReloadRequest()) {
-			// シーンの解放
-			delete gameScene;
-			gameScene = nullptr;
-
-			// グローバル変数の再読み込み
-			GlobalVariables::GetInstance()->LoadFiles();
-
-			// 新シーンの生成
-			gameScene = new GameScene();
-			gameScene->Initialize();
-		}
-
-		break;
-
-	case Scene::kUnknown:
-	default:
-		break;
-	}
-}
-
-void UpdateScene() {
-	switch (scene) {
-	case Scene::kTitle:
-		if (titleScene) {
-			titleScene->Update();
-		}
-		break;
-
-	case Scene::kGame:
-		if (gameScene) {
-			gameScene->Update();
-		}
-		break;
-
-	case Scene::kUnknown:
-	default:
-		break;
-	}
-}
-
-void DrawScene() {
-	switch (scene) {
-	case Scene::kTitle:
-		if (titleScene) {
-			titleScene->Draw();
-		}
-		break;
-
-	case Scene::kGame:
-		if (gameScene) {
-			gameScene->Draw();
-		}
-		break;
-
-	case Scene::kUnknown:
-	default:
-		break;
-	}
-}
-
-void LoadDebugSettings() {
-	std::ifstream file("DebugSettings.ini");
-
-	// 個人用ファイルなので、存在しなくても問題なし
-	if (!file.is_open()) {
-		return;
-	}
-
-	std::string key;
-	std::string value;
-
-	while (file >> key >> value) {
-		if (key == "InitialStage") {
-			StageManager::GetInstance()->SetCurrentStageIndexByName(value);
-		}
-	}
 }

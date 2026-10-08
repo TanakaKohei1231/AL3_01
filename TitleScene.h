@@ -1,20 +1,19 @@
 #pragma once
 #include "KamataEngine.h"
+#include <memory>
 #include "Fade.h"
 #include "IScene.h"
 
 class TitleScene : public IScene {
   public:
 	// 初期化処理
-	  void Initialize() override;
+	void Initialize() override;
 
 	// 更新処理
 	void Update() override;
 
 	// 描画処理
 	void Draw() override;
-
-	~TitleScene();
 
   private:
 
@@ -29,23 +28,23 @@ class TitleScene : public IScene {
 	Phase phase_ = Phase::kFadeIn;
 
 	// カメラ
-	KamataEngine::Camera camera_;
+	std::unique_ptr<KamataEngine::Camera> camera_;
 
 	// タイトル用モデル
-	KamataEngine::Model* modelTitle_ = nullptr;
+	std::unique_ptr<KamataEngine::Model> modelTitle_;
 
 	// プレイヤー見た目用モデル
-	KamataEngine::Model* modelPlayer_ = nullptr;
+	std::unique_ptr<KamataEngine::Model> modelPlayer_;
 
 	// タイトル用ワールド変換
-	KamataEngine::WorldTransform worldTransformTitle_;
+	std::unique_ptr<KamataEngine::WorldTransform> worldTransformTitle_;
 
 	// プレイヤー見た目用ワールド変換
-	KamataEngine::WorldTransform worldTransformPlayer_;
+	std::unique_ptr<KamataEngine::WorldTransform> worldTransformPlayer_;
 
 	// アニメーション用タイマー
 	float animationTimer_ = 0.0f;
 
 	// フェード
-	Fade* fade_ = nullptr;
+	std::unique_ptr<Fade> fade_;
 };

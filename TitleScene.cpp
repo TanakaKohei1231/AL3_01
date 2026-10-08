@@ -12,30 +12,30 @@ void TitleScene::Initialize() {
 	animationTimer_ = 0.0f;
 
 	// カメラ初期化
-	camera_.Initialize();
-	camera_.translation_ = {0.0f, 1.0f, -10.0f};
-	camera_.rotation_ = {0.0f, 0.0f, 0.0f};
-	camera_.UpdateMatrix();
+	camera_ = std::make_unique<Camera>();
+	camera_->Initialize();
+	camera_->translation_ = {0.0f, 1.0f, -10.0f};
+	camera_->rotation_ = {0.0f, 0.0f, 0.0f};
+	camera_->UpdateMatrix();
 
 	// モデル読み込み
-	// タイトル文字モデルがある場合
-	modelTitle_ = Model::CreateFromOBJ("titleFont", true);
-
-	// プレイヤーモデル
-	modelPlayer_ = Model::CreateFromOBJ("player", true);
+	modelTitle_.reset(Model::CreateFromOBJ("titleFont", true));
+	modelPlayer_.reset(Model::CreateFromOBJ("player", true));
 
 	// タイトル文字のワールド変換
-	worldTransformTitle_.Initialize();
-	worldTransformTitle_.translation_ = {0.0f, 3.0f, 0.0f};
-	worldTransformTitle_.scale_ = {0.5f, 0.5f, 0.5f};
+	worldTransformTitle_ = std::make_unique<WorldTransform>();
+	worldTransformTitle_->Initialize();
+	worldTransformTitle_->translation_ = {0.0f, 3.0f, 0.0f};
+	worldTransformTitle_->scale_ = {0.5f, 0.5f, 0.5f};
 
 	// プレイヤーモデルのワールド変換
-	worldTransformPlayer_.Initialize();
-	worldTransformPlayer_.translation_ = {0.0f, -1.0f, 0.0f};
-	worldTransformPlayer_.rotation_.y = std::numbers::pi_v<float> / 2.0f;
+	worldTransformPlayer_ = std::make_unique<WorldTransform>();
+	worldTransformPlayer_->Initialize();
+	worldTransformPlayer_->translation_ = {0.0f, -1.0f, 0.0f};
+	worldTransformPlayer_->rotation_.y = kPi / 2.0f;
 
 	// フェード
-	fade_ = new Fade();
+	fade_ = std::make_unique<Fade>();
 	fade_->Initialize();
 	fade_->Start(Fade::Status::kFadeIn, 1.0f);
 }
@@ -46,21 +46,21 @@ void TitleScene::Update() {
 
 	// プレイヤーを上下にふわふわさせる
 	float floating = std::sin(2.0f * kPi * animationTimer_) * 0.2f;
-	worldTransformPlayer_.translation_.y = -1.0f + floating;
+	worldTransformPlayer_->translation_.y = -1.0f + floating;
 
 	// プレイヤーをゆっくり回転させる
-	worldTransformPlayer_.rotation_.y += 0.02f;
+	worldTransformPlayer_->rotation_.y += 0.02f;
 
 	// タイトル文字も少しだけ上下させる
 	float titleFloating = std::sin(2.0f * kPi * animationTimer_ * 0.5f) * 0.1f;
-	worldTransformTitle_.translation_.y = 3.0f + titleFloating;
+	worldTransformTitle_->translation_.y = 3.0f + titleFloating;
 
 	// ワールド行列更新
-	WorldTransformUpdate(worldTransformTitle_);
-	WorldTransformUpdate(worldTransformPlayer_);
+	WorldTransformUpdate(*worldTransformTitle_);
+	WorldTransformUpdate(*worldTransformPlayer_);
 
 	// カメラ行列更新
-	camera_.UpdateMatrix();
+	camera_->UpdateMatrix();
 
 	switch (phase_) {
 	case Phase::kFadeIn:
@@ -93,11 +93,11 @@ void TitleScene::Draw() {
 	Model::PreDraw();
 
 	if (modelTitle_) {
-		modelTitle_->Draw(worldTransformTitle_, camera_);
+		modelTitle_->Draw(*worldTransformTitle_, *camera_);
 	}
 
 	if (modelPlayer_) {
-		modelPlayer_->Draw(worldTransformPlayer_, camera_);
+		modelPlayer_->Draw(*worldTransformPlayer_, *camera_);
 	}
 
 	Model::PostDraw();
@@ -105,15 +105,4 @@ void TitleScene::Draw() {
 	if (fade_) {
 		fade_->Draw();
 	}
-}
-
-TitleScene::~TitleScene() {
-	delete modelTitle_;
-	modelTitle_ = nullptr;
-
-	delete modelPlayer_;
-	modelPlayer_ = nullptr;
-
-	delete fade_;
-	fade_ = nullptr;
 }

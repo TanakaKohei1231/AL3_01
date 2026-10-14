@@ -6,6 +6,7 @@
 #include "ShieldEnemy.h"
 #include "GuardEffect.h"
 #include "StageManager.h"
+#include "ModelManager.h"
 
 using namespace KamataEngine;
 
@@ -32,10 +33,11 @@ void GameScene::Initialize() {
 	cameraController_->SetMode(CameraMode::kFollow);
 
 
+	ModelManager *modelManager = ModelManager::GetInstance();
+
 	// 天球の生成
 	skydome_ = std::make_unique<Skydome>();
-	modelSkydome_.reset(Model::CreateFromOBJ("SkyDome", true));
-	skydome_->Initialize(modelSkydome_.get(), camera_.get());
+	skydome_->Initialize(modelManager->Load("SkyDome", true), camera_.get());
 
 	// マップチップフィールドの生成
 	mapChipField_ = std::make_unique<MapChipField>();
@@ -49,21 +51,10 @@ void GameScene::Initialize() {
 	// ステージファイルの読み込み
 	mapChipField_->LoadMapChipCsv(stageFileName);
 
-	// プレイヤー
-	modelPlayer_.reset(Model::CreateFromOBJ("player", true));
-	modelAttack_.reset(Model::CreateFromOBJ("hit_effect", true));
-
-	// デスパーティクル
-	modelDeathParticles_.reset(Model::CreateFromOBJ("deathParticle", true));
-
 	// フェード
 	fade_ = std::make_unique<Fade>();
 	fade_->Initialize();
 	fade_->Start(Fade::Status::kFadeIn, 1.0f);
-
-	// 敵
-	modelEnemy_.reset(Model::CreateFromOBJ("enemy", true));
-	modelShieldEnemy_.reset(Model::CreateFromOBJ("shieldEnemy", true));
 
 	// デバッグカメラの生成
 	debugCamera_ = std::make_unique<DebugCamera>(kMaxWindowWidth, kMaxWindowHeight);
@@ -73,12 +64,10 @@ void GameScene::Initialize() {
 	modelBlock_.reset(Model::CreateFromOBJ("block", true));
 	blockTextureHandle_ = TextureManager::Load("block/block.png");
 
-	modelHitEffect_.reset(Model::CreateFromOBJ("particle", true));
-	HitEffect::SetModel(modelHitEffect_.get());
+	HitEffect::SetModel(modelManager->Load("particle", true));
 	HitEffect::SetCamera(camera_.get());
 
-	modelGuardEffect_.reset(Model::CreateFromOBJ("ring", true));
-	GuardEffect::SetModel(modelGuardEffect_.get());
+	GuardEffect::SetModel(modelManager->Load("ring", true));
 	GuardEffect::SetCamera(camera_.get());
 
 	// 調整項目の登録
@@ -215,7 +204,7 @@ void GameScene::GenerateFieldObjects() {
 				assert(player_ == nullptr && "自キャラを二重に配置しようとしています");
 
 				player_ = std::make_unique<Player>();
-				player_->Initialize(modelPlayer_.get(), modelAttack_.get(), camera_.get(), mapPosition);
+				player_->Initialize(camera_.get(), mapPosition);
 				player_->SetMapChipField(mapChipField_.get());
 
 				break;
@@ -235,7 +224,7 @@ void GameScene::GenerateEnemy(Vector3 &position,uint8_t type) {
 	case EnemySpawnType::kNormal: {
 	
 		auto newEnemy = std::make_unique<Enemy>();
-		newEnemy->Initialize(modelEnemy_.get(), camera_.get(), position);
+		newEnemy->Initialize(camera_.get(), position);
 		newEnemy->SetGameScene(this);
 		enemies_.push_back(std::move(newEnemy));
 
@@ -246,7 +235,7 @@ void GameScene::GenerateEnemy(Vector3 &position,uint8_t type) {
 	case EnemySpawnType::kShield: {
 	
 		auto newShieldEnemy = std::make_unique<ShieldEnemy>();
-		newShieldEnemy->Initialize(modelShieldEnemy_.get(), camera_.get(), position);
+		newShieldEnemy->Initialize(camera_.get(), position);
 		newShieldEnemy->SetGameScene(this);
 		enemies_.push_back(std::move(newShieldEnemy));
 
@@ -389,7 +378,7 @@ void GameScene::ChangePhase() {
 
 			// 自キャラの座標にデスパーティクルを発生
 			deathParticles_ = std::make_unique<DeathParticles>();
-			deathParticles_->Initialize(modelDeathParticles_.get(), camera_.get(), deathParticlesPosition);
+			deathParticles_->Initialize(camera_.get(), deathParticlesPosition);
 		}
 		break;
 

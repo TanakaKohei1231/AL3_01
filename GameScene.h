@@ -39,29 +39,15 @@ class GameScene : public IScene {
   private:
 
 	// プレイヤー
-	std::unique_ptr<KamataEngine::Model> modelPlayer_;
 	std::unique_ptr<Player> player_;
 
-	// プレイヤー攻撃エフェクト用モデル
-	std::unique_ptr<KamataEngine::Model> modelAttack_;
-
-	// ヒットエフェクト用モデル
-	std::unique_ptr<KamataEngine::Model> modelHitEffect_;
-
-	// ガードエフェクト用モデル
-	std::unique_ptr<KamataEngine::Model> modelGuardEffect_;
-
 	// 敵
-	std::unique_ptr<KamataEngine::Model> modelEnemy_;
-	std::unique_ptr<KamataEngine::Model> modelShieldEnemy_;
 	std::list <std::unique_ptr<BaseEnemy>> enemies_;
 
 	// 天球
-	std::unique_ptr<KamataEngine::Model> modelSkydome_;
 	std::unique_ptr <Skydome> skydome_;
 
 	// デスパーティクル
-	std::unique_ptr<KamataEngine::Model> modelDeathParticles_;
 	std::unique_ptr<DeathParticles> deathParticles_;
 
 	// マップチップフィールド

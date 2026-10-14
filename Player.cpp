@@ -9,18 +9,23 @@
 #include"MapChipField.h"
 #include "GlobalVariables.h"
 #include "GameInput.h"
+#include "ModelManager.h"
 
 using namespace KamataEngine;
 
-void Player::Initialize(Model* model, Model* modelAttack, Camera* camera, Vector3 position) {
+void Player::Initialize(Camera* camera, Vector3 position) {
 
-	assert(model);
 	assert(camera);
-	assert(modelAttack);
 
-	// 引数で渡されたモデルをメンバ変数に保存
-	model_ = model;
-	modelAttack_ = modelAttack;
+	// 引数で渡されたカメラをメンバ変数に保存
+	camera_ = camera;
+
+	// モデルマネージャーからモデルを取得
+	model_ = ModelManager::GetInstance()->Load("player", true);
+	modelAttack_ = ModelManager::GetInstance()->Load("hit_effect", true);
+
+	assert(model_ != nullptr);
+	assert(modelAttack_ != nullptr);
 
 	// 死亡フラグを初期化
 	isDead_ = false;
@@ -38,9 +43,6 @@ void Player::Initialize(Model* model, Model* modelAttack, Camera* camera, Vector
 
 	worldTransformAttack_.Initialize();
 	worldTransformAttack_.translation_ = position;
-
-	// 引数で渡されたカメラをメンバ変数に保存
-	camera_ = camera;
 
 	// 振る舞いの初期化
 	behavior_ = Behavior::kRoot;

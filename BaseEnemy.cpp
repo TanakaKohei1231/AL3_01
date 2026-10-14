@@ -3,8 +3,8 @@
 
 using namespace KamataEngine;
 
-void BaseEnemy::Initialize(Model* model, Camera* camera, Vector3 position) {
-	InitializeCommon(model, camera, position);
+void BaseEnemy::Initialize(Camera* camera, Vector3 position) {
+	InitializeCommon(camera, position);
 	InitializeInternal();
 }
 
@@ -26,16 +26,12 @@ Vector3 BaseEnemy::GetWorldPosition() const {
 	return worldPosition;
 }
 
-void BaseEnemy::InitializeCommon(Model* model, Camera* camera, Vector3 position) {
+void BaseEnemy::InitializeCommon(Camera* camera, Vector3 position) {
 	#ifdef _DEBUG
 
-	assert(model);
 	assert(camera);
 
 	#endif // _DEBUG
-
-	// 引数で渡されたモデルとテクスチャハンドルをメンバ変数に保存
-	model_ = model;
 
 	// ワールド変換の初期化
 	worldTransform_.Initialize();

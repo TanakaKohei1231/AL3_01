@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include"KamataEngine.h"
 #include "GameManager.h"
+#include "ModelManager.h"
 
 using namespace KamataEngine;
 
@@ -8,7 +9,7 @@ using namespace KamataEngine;
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// エンジンの初期化
-	::Initialize(L"LE2C_18_タナカ_コウヘイ");
+	Initialize(L"LE2C_18_タナカ_コウヘイ");
 	
 	// DirectXCommonインスタンスの取得
 	DirectXCommon* dXCommon = DirectXCommon::GetInstance();
@@ -54,8 +55,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// GameManager以下をすべて破棄
 	gameManager.reset();
 
+	// モデルマネージャーの終了処理
+	ModelManager::GetInstance()->Finalize();
+
 	// エンジンの終了処理
-	::Finalize();
+	Finalize();
 
 	return 0;
 }

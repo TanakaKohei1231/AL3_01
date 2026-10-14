@@ -11,7 +11,7 @@ class BaseEnemy {
 	// 仮想デストラクタ
 	virtual ~BaseEnemy() = default;
 
-	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, KamataEngine::Vector3 position);
+	void Initialize(KamataEngine::Camera* camera, KamataEngine::Vector3 position);
 	virtual void Update() = 0;
 	virtual void Draw();
 	virtual void OnCollision(Player* player) = 0;
@@ -48,5 +48,5 @@ class BaseEnemy {
 	bool isDead_ = false;
 
   private:
-	void InitializeCommon(KamataEngine::Model* model, KamataEngine::Camera* camera, KamataEngine::Vector3 position);
+	void InitializeCommon(KamataEngine::Camera* camera, KamataEngine::Vector3 position);
 };

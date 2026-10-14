@@ -9,7 +9,7 @@
 class DeathParticles {
 public:
 	// 初期化処理
-	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
+	void Initialize(KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
 
 	// 更新処理
 	void Update();

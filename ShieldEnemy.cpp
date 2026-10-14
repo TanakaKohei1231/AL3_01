@@ -7,10 +7,14 @@
 #include<numbers>
 #include<cmath>
 #include <algorithm>
+#include "ModelManager.h"
 
 using namespace KamataEngine;
 
 void ShieldEnemy::InitializeInternal () {
+	// モデルマネージャーからモデルを取得
+	model_ = ModelManager::GetInstance()->Load("shieldEnemy", true);
+
 	// モデルの向きに合わせてY軸回りに回転させる
 	worldTransform_.rotation_.y = kDefaultAngle;
 

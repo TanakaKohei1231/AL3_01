@@ -3,19 +3,16 @@
 #include "Matrix4x4Util.h"
 #include <cassert>
 #include <algorithm>
+#include "ModelManager.h"
 
 using namespace KamataEngine;
 
-void DeathParticles::Initialize(Model* model, Camera* camera, const Vector3& position) {
-	if (model == nullptr) {
-		assert(model);
-	}
-
+void DeathParticles::Initialize(Camera* camera, const Vector3& position) {
 	if (camera == nullptr) {
 		assert(camera);
 	}
 
-	model_ = model;
+	model_ = ModelManager::GetInstance()->Load("deathParticle", true);
 	camera_ = camera;
 	isFinished_ = false;
 	counter_ = 0.0f;

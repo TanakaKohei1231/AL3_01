@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cmath>
 #include <numbers>
+#include "ModelManager.h"
 
 using namespace KamataEngine;
 
@@ -18,9 +19,11 @@ void TitleScene::Initialize() {
 	camera_->rotation_ = {0.0f, 0.0f, 0.0f};
 	camera_->UpdateMatrix();
 
+	ModelManager *modelManager = ModelManager::GetInstance();
+
 	// モデル読み込み
-	modelTitle_.reset(Model::CreateFromOBJ("titleFont", true));
-	modelPlayer_.reset(Model::CreateFromOBJ("player", true));
+	modelTitle_ = modelManager->Load("titleFont", true);
+	modelPlayer_ = modelManager->Load("player", true);
 
 	// タイトル文字のワールド変換
 	worldTransformTitle_ = std::make_unique<WorldTransform>();

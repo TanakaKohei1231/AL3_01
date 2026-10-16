@@ -31,10 +31,10 @@ class TitleScene : public IScene {
 	std::unique_ptr<KamataEngine::Camera> camera_;
 
 	// タイトル用モデル
-	std::unique_ptr<KamataEngine::Model> modelTitle_;
+	KamataEngine::Model* modelTitle_;
 
 	// プレイヤー見た目用モデル
-	std::unique_ptr<KamataEngine::Model> modelPlayer_;
+	KamataEngine::Model* modelPlayer_;
 
 	// タイトル用ワールド変換
 	std::unique_ptr<KamataEngine::WorldTransform> worldTransformTitle_;

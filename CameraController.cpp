@@ -2,6 +2,7 @@
 #include "Player.h"
 #include "Vector3Util.h"
 #include <algorithm>
+#include <cmath>
 #include "Ease.h"
 
 using namespace KamataEngine;
@@ -19,6 +20,10 @@ void CameraController::Initialize(Camera* camera) {
 
 
 void CameraController::Update() {
+	// 前フレームのシェイクを除去
+	camera_->translation_ -= shakeOffset_;
+	shakeOffset_ = {};
+
 	switch (mode_) {
 	// 追従カメラ(通常)
 	case CameraMode::kFollow:
@@ -32,8 +37,8 @@ void CameraController::Update() {
 		break;
 	}
 
-	// 行列の更新
-	camera_->UpdateMatrix();
+	// シェイク適用とカメラ行列更新
+	UpdateShake();
 }
 
 void CameraController::Reset() {
@@ -42,6 +47,69 @@ void CameraController::Reset() {
 
 	// 追従対象とオフセットからカメラ座標を計算
 	camera_->translation_ = targetWorldTransform.translation_ + targetOffset_;
+
+	// シェイク状態をリセット
+	shakeOffset_ = {};
+	shakePower_ = 0.0f;
+	shakeTimer_ = 0;
+	shakeDuration_ = 0;
+	shakeElapsedFrames_ = 0;
+}
+
+void CameraController::StartShake(float power, int32_t durationFrames) {
+	// 不正な設定なら何もしない
+	if (power <= 0.0f || durationFrames <= 0) {
+		return;
+	}
+
+	// より強いシェイクが要求された場合は更新
+	if (shakeTimer_ > 0 && power < shakePower_) {
+		return;
+	}
+
+	shakePower_ = power;
+	shakeDuration_ = durationFrames;
+	shakeTimer_ = durationFrames;
+	shakeElapsedFrames_ = 0;
+}
+
+void CameraController::UpdateShake() {
+	// カメラシェイクを更新
+	ApplyShake();
+
+	// カメラの行列を更新
+	camera_->UpdateMatrix();
+}
+
+void CameraController::ApplyShake() {
+	// 前フレームの揺れを除去
+	camera_->translation_ -= shakeOffset_;
+
+	// オフセットをリセット
+	shakeOffset_ = {};
+
+	// シェイクしていなければ終了
+	if (shakeTimer_ <= 0) {
+		return;
+	}
+
+	// 残り時間に応じて揺れを弱くする
+	float t = static_cast<float>(shakeTimer_) / static_cast<float>(shakeDuration_);
+
+	float currentPower = shakePower_ * t;
+
+	// 時間経過によって揺れの向きを変える
+	float phase = static_cast<float>(shakeElapsedFrames_);
+
+	shakeOffset_.x = std::sin(phase * 2.4f) * currentPower;
+	shakeOffset_.y = std::cos(phase * 3.1f) * currentPower;
+
+	// カメラに揺れを適用
+	camera_->translation_ += shakeOffset_;
+
+	// タイマー更新
+	--shakeTimer_;
+	++shakeElapsedFrames_;
 }
 
 

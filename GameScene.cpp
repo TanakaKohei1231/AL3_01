@@ -7,6 +7,7 @@
 #include "GuardEffect.h"
 #include "StageManager.h"
 #include "ModelManager.h"
+#include <algorithm>
 
 using namespace KamataEngine;
 
@@ -89,6 +90,11 @@ void GameScene::Initialize() {
 void GameScene::Update() {
 	// フェーズ切り替え
 	ChangePhase();
+
+	// 敵のヒットフラッシュ更新
+	for (const auto& enemy : enemies_) {
+		enemy->UpdateHitFlash();
+	}
 
 	switch (phase_) {
 	case Phase::kFadeIn:
@@ -273,6 +279,21 @@ void GameScene::CheckAllCollisions() {
 }
 
 void GameScene::UpdatePlayPhase() {
+	// ヒットストップ中はゲームの更新を停止
+	if (hitStopTimer_ > 0) {
+		--hitStopTimer_;
+
+		// カメラシェイクだけ更新
+		if (!isDebugCameraActive_) {
+			cameraController_->UpdateShake();
+		}
+
+		// ヒットエフェクトは更新する
+		UpdateHitEffects();
+
+		return;
+	}
+
 	// 強制スクロール中だけ、画面端挟まれ死亡判定を有効にする
 	player_->SetScreenSqueezeDeathEnabled(cameraController_->GetMode() == CameraMode::kForcedScroll);
 
@@ -399,10 +420,20 @@ void GameScene::ChangePhase() {
 
 void GameScene::CreateHitEffect(const Vector3& position) {
 	effects_.push_back(std::unique_ptr<BaseEffect>(HitEffect::Create(position)));
+
+	// ヒットストップを要求
+	RequestHitStop();
+
+	// カメラシェイクを開始
+	cameraController_->StartShake(0.2f, 12);
 }
 
 void GameScene::CreateGuardEffect(const Vector3& position) {
-	effects_.push_back(std::unique_ptr<BaseEffect>(GuardEffect::Create(position)));
+	effects_.push_back(std::unique_ptr<BaseEffect>(GuardEffect::Create(position))); }
+
+void GameScene::RequestHitStop() {
+	// 現在の残り時間より長い場合だけ更新
+	hitStopTimer_ = (std::max)(hitStopTimer_, kHitStopFrames);
 }
 
 void GameScene::UpdateHitEffects() {

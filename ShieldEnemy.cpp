@@ -98,6 +98,9 @@ void ShieldEnemy::OnCollision(Player* player) {
 			return;
 		}
 
+		// ヒットフラッシュ開始
+		StartHitFlash();
+
 		// 振る舞いをデス演出に変更
 		behaviorRequest_ = Behavior::kDeathDirection;
 

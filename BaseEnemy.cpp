@@ -11,9 +11,32 @@ void BaseEnemy::Initialize(Camera* camera, Vector3 position) {
 void BaseEnemy::Draw() {
 	Model::PreDraw();
 
-	model_->Draw(worldTransform_, *camera_);
+	model_->Draw(worldTransform_, *camera_, &objectColor_);
 
 	Model::PostDraw();
+}
+
+void BaseEnemy::StartHitFlash() {
+	// タイマーを設定
+	hitFlashTimer_ = kHitFlashFrames;
+
+	// ヒット時の色を適用
+	objectColor_.SetColor(kHitFlashColor);
+}
+
+void BaseEnemy::UpdateHitFlash() {
+	// フラッシュ中でなければ何もしない
+	if (hitFlashTimer_ <= 0) {
+		return;
+	}
+
+	// タイマー更新
+	--hitFlashTimer_;
+
+	// フラッシュが終わったら通常色へ戻す
+	if (hitFlashTimer_ <= 0) {
+		objectColor_.SetColor(kNormalColor);
+	}
 }
 
 Vector3 BaseEnemy::GetWorldPosition() const {
@@ -44,4 +67,9 @@ void BaseEnemy::InitializeCommon(Camera* camera, Vector3 position) {
 
 	isCollisionDisabled_ = false;
 	isDead_ = false;
+
+	// ヒットフラッシュの初期化
+	objectColor_.Initialize();
+	objectColor_.SetColor(kNormalColor);
+	hitFlashTimer_ = 0;
 }

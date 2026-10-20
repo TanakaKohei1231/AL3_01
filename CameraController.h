@@ -16,6 +16,11 @@ public:
 	void Update();
 	void Reset();
 
+	// カメラシェイク開始
+	void StartShake(float power, int32_t durationFrames);
+
+	// カメラシェイクだけ更新
+	void UpdateShake();
 
 
 	//============================================================
@@ -66,4 +71,26 @@ private:
 
 	// 強制スクロール速度
 	static inline const float kForcedScrollSpeed = 0.05f;
+
+	//============================================================
+	// カメラシェイク
+	//============================================================
+
+	// シェイク処理内部
+	void ApplyShake();
+
+	// 前フレームで適用した揺れの移動量
+	KamataEngine::Vector3 shakeOffset_ = {};
+
+	// シェイクの強さ
+	float shakePower_ = 0.0f;
+
+	// シェイクの残りフレーム数
+	int32_t shakeTimer_ = 0;
+
+	// シェイクの持続フレーム数
+	int32_t shakeDuration_ = 0;
+
+	// シェイク用の経過フレーム数
+	int32_t shakeElapsedFrames_ = 0;
 };

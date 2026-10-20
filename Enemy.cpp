@@ -82,6 +82,9 @@ void Enemy::OnCollision(Player* player) {
 
 	// プレイヤーが攻撃中なら死ぬ
 	if (player->IsAttack()) {
+		// ヒットフラッシュ開始
+		StartHitFlash();
+
 		// 振る舞いをデス演出に変更
 		behaviorRequest_ = Behavior::kDeathDirection;
 

@@ -36,6 +36,9 @@ class GameScene : public IScene {
 	// ガードエフェクトを生成
 	void CreateGuardEffect(const KamataEngine::Vector3& position);
 
+	// ヒットストップを要求
+	void RequestHitStop();
+
   private:
 
 	// プレイヤー
@@ -97,6 +100,12 @@ class GameScene : public IScene {
 
 	// ヒットエフェクトの描画
 	void DrawHitEffects();
+
+	// ヒットストップの残りフレーム数
+	int32_t hitStopTimer_ = 0;
+
+	// ヒットストップの持続フレーム数
+	static inline const int32_t kHitStopFrames = 5;
 
 	// 敵を生成
 	void GenerateEnemy(KamataEngine::Vector3 &position,uint8_t type);

@@ -16,6 +16,12 @@ class BaseEnemy {
 	virtual void Draw();
 	virtual void OnCollision(Player* player) = 0;
 
+	// ヒットフラッシュ開始
+	void StartHitFlash();
+
+	// ヒットフラッシュ更新
+	void UpdateHitFlash();
+
 	virtual AABB GetAABB() = 0;
 	KamataEngine::Vector3 GetWorldPosition() const;
 	// あたり判定無効かどうか
@@ -46,6 +52,25 @@ class BaseEnemy {
 
 	// デスフラグ
 	bool isDead_ = false;
+
+	//============================================================
+	// ヒットフラッシュ
+	//============================================================
+
+	// 色変更オブジェクト
+	KamataEngine::ObjectColor objectColor_;
+
+	// ヒットフラッシュの残りフレーム数
+	int32_t hitFlashTimer_ = 0;
+
+	// ヒットフラッシュの持続フレーム数
+	static inline const int32_t kHitFlashFrames = 12;
+
+	// 通常の描画色
+	static inline const KamataEngine::Vector4 kNormalColor = {1.0f, 1.0f, 1.0f, 1.0f};
+
+	// ヒット時の描画色
+	static inline const KamataEngine::Vector4 kHitFlashColor = {1.0f, 0.2f, 0.2f, 1.0f};
 
   private:
 	void InitializeCommon(KamataEngine::Camera* camera, KamataEngine::Vector3 position);

@@ -51,7 +51,13 @@ void NormalEnemyWalk::Initialize() {
 	enemy_->SetVelocity({-kWalkSpeed, 0.0f, 0.0f});
 }
 
-void NormalEnemyWalk::Update() { enemy_->Move(enemy_->GetVelocity()); }
+void NormalEnemyWalk::Update() {
+	// 横方向の速度を取得
+	const Vector3& velocity = enemy_->GetVelocity();
+
+	// 横方向のみ移動する
+	enemy_->ResolveMapChipCollision({velocity.x, 0.0f, 0.0f});
+}
 
 void NormalEnemyWalk::UpdateMotion() {
 	walkTimer_ += 1.0f / 60.0f;
@@ -76,11 +82,27 @@ void NormalEnemyWalk::UpdateMotion() {
 ShieldEnemyWalk::ShieldEnemyWalk(BaseEnemy* enemy) : enemy_(enemy) {}
 
 void ShieldEnemyWalk::Initialize() {
+	// 歩行モーションを初期化
 	walkTimer_ = 0.0f;
-	enemy_->SetVelocity({-kWalkSpeed, 0.0f, 0.0f});
+	enemy_->SetWalkMotionY(0.0f);
+
+	// 現在の向きに応じて歩行速度を設定
+	float moveSpeed = kWalkSpeed;
+
+	if (enemy_->GetLRDirection() == LRDirection::kLeft) {
+		moveSpeed = -kWalkSpeed;
+	}
+
+	enemy_->SetVelocity({moveSpeed, 0.0f, 0.0f});
 }
 
-void ShieldEnemyWalk::Update() { enemy_->Move(enemy_->GetVelocity()); }
+void ShieldEnemyWalk::Update() {
+	// 横方向の速度を取得
+	const Vector3& velocity = enemy_->GetVelocity();
+
+	// 横方向のみ移動する
+	enemy_->ResolveMapChipCollision({velocity.x, 0.0f, 0.0f});
+}
 
 void ShieldEnemyWalk::UpdateMotion() {
 	walkTimer_ += 1.0f / 60.0f;
@@ -95,7 +117,7 @@ void ShieldEnemyWalk::UpdateMotion() {
 
 	float angle = Lerp(kShieldWalkAngle, -kShieldWalkAngle, interpolation);
 
-	enemy_->SetRotationY(kDefaultEnemyAngle + angle);
+	enemy_->SetWalkMotionY(angle);
 }
 
 //============================================================
@@ -134,9 +156,16 @@ void EnemyDeathBehavior::UpdateMotion() {
 ShieldEnemyGuard::ShieldEnemyGuard(ShieldEnemy* enemy) : enemy_(enemy) {}
 
 void ShieldEnemyGuard::Initialize() {
+	// ガードの経過時間を初期化
 	guardTimer_ = 0.0f;
+
+	// 歩行モーションのY軸回転量をリセット
+	enemy_->SetWalkMotionY(0.0f);
+
+	// ガード開始時のZ回転を保存
 	guardStartRotationZ_ = enemy_->GetRotationZ();
 
+	// ガード中は移動しない
 	enemy_->SetVelocity({0.0f, 0.0f, 0.0f});
 }
 

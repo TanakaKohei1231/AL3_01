@@ -19,8 +19,6 @@ void ShieldEnemy::InitializeInternal () {
 	// モデルの向きに合わせてY軸回りに回転させる
 	worldTransform_.rotation_.y = kDefaultAngle;
 
-	lrDirection_ = LRDirection::kLeft;
-
 	// 最初の振る舞いを要求
 	RequestBehaviorChange(std::make_unique<ShieldEnemyWalk>(this));
 }

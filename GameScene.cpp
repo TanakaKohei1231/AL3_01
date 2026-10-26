@@ -204,8 +204,7 @@ void GameScene::GenerateFieldObjects() {
 				assert(player_ == nullptr && "自キャラを二重に配置しようとしています");
 
 				player_ = std::make_unique<Player>();
-				player_->Initialize(camera_.get(), mapPosition);
-				player_->SetMapChipField(mapChipField_.get());
+				player_->Initialize(camera_.get(), mapPosition, mapChipField_.get());
 
 				break;
 			}
@@ -224,7 +223,7 @@ void GameScene::GenerateEnemy(Vector3 &position,uint8_t type) {
 	case EnemySpawnType::kNormal: {
 	
 		auto newEnemy = std::make_unique<Enemy>();
-		newEnemy->Initialize(camera_.get(), position);
+		newEnemy->Initialize(camera_.get(), position, mapChipField_.get());
 		newEnemy->SetGameScene(this);
 		enemies_.push_back(std::move(newEnemy));
 
@@ -235,7 +234,7 @@ void GameScene::GenerateEnemy(Vector3 &position,uint8_t type) {
 	case EnemySpawnType::kShield: {
 	
 		auto newShieldEnemy = std::make_unique<ShieldEnemy>();
-		newShieldEnemy->Initialize(camera_.get(), position);
+		newShieldEnemy->Initialize(camera_.get(), position, mapChipField_.get());
 		newShieldEnemy->SetGameScene(this);
 		enemies_.push_back(std::move(newShieldEnemy));
 
@@ -293,8 +292,14 @@ void GameScene::UpdatePlayPhase() {
 
 	player_->Update();
 
+	// プレイヤーの落下死亡判定
+	player_->CheckFallDeath(kFallDeathY);
+
 	for (const auto& enemy : enemies_) {
 		enemy->Update();
+
+		// 敵の落下死亡判定
+		enemy->CheckFallDeath(kFallDeathY);
 	}
 
 	// 死んだ敵を削除

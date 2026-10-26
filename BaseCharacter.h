@@ -3,15 +3,25 @@
 #include "ICharactersBehavior.h"
 #include"Collision.h"
 
+enum Corner { kRightBottom, kLeftBottom, kRightTop, kLeftTop, kNumCorner };
+
+struct CollisionMapInfo {
+	bool isHitCeiling = false;
+	bool onGround = false;
+	bool isHitWall = false;
+	KamataEngine::Vector3 moveDistance = {};
+};
+
 // 前方宣言
 class GameScene;
+class MapChipField;
 
 class BaseCharacter {
   public:
 	// 仮想デストラクタ
 	virtual ~BaseCharacter() = default;
 
-	void Initialize(KamataEngine::Camera* camera, KamataEngine::Vector3 position);
+	void Initialize(KamataEngine::Camera* camera, KamataEngine::Vector3 position, MapChipField* mapChipField);
 	void Update();
 	virtual void Draw();
 
@@ -20,6 +30,9 @@ class BaseCharacter {
 
 	// ヒットフラッシュ更新
 	void UpdateHitFlash();
+
+	// デスラインより下に落ちたか判定
+	void CheckFallDeath(float deathLineY);
 
 	AABB GetAABB() const;
 
@@ -53,6 +66,12 @@ class BaseCharacter {
 
 	// 死亡フラグ
 	void SetDead(bool isDead) { isDead_ = isDead; }
+
+	// マップチップフィールドを設定
+	void SetMapChipField(MapChipField* mapChipField) { mapChipField_ = mapChipField; }
+
+	// マップチップとの衝突を解決して移動する
+	void ResolveMapChipCollision(const KamataEngine::Vector3& moveDistance);
 
 	// 攻撃状態か
 	bool IsAttack() const {
@@ -91,6 +110,9 @@ class BaseCharacter {
 	// カメラ
 	KamataEngine::Camera* camera_ = nullptr;
 
+	// マップチップフィールド
+	MapChipField* mapChipField_ = nullptr;
+
 	// キャラクターの当たり判定サイズ
 	float width_ = 0.8f;
 	float height_ = 0.8f;
@@ -112,6 +134,37 @@ class BaseCharacter {
 
 	// ワールド変換更新後の個別処理
 	virtual void AfterTransformUpdate() {}
+
+	// 落下死亡時の個別処理
+	virtual void OnFallDeath() {}
+
+	// 天井に接触したとき
+	virtual void OnCollisionCeiling() {}
+
+	// 地面に接触したとき
+	virtual void OnCollisionGround() {}
+
+	// 壁に接触したとき
+	virtual void OnCollisionWall() {}
+
+	// マップチップとの衝突判定
+	void MapChipCollision(CollisionMapInfo& info);
+	void MapChipCollisionTop(CollisionMapInfo& info);
+	void MapChipCollisionBottom(CollisionMapInfo& info);
+	void MapChipCollisionLeft(CollisionMapInfo& info);
+	void MapChipCollisionRight(CollisionMapInfo& info);
+
+	// 衝突結果を反映して移動
+	void ApplyCollisionResult(const CollisionMapInfo& info);
+
+	// キャラクターの四隅の座標
+	KamataEngine::Vector3 CornerPosition(const KamataEngine::Vector3& center, Corner corner);
+
+	// 衝突解決後に呼び出す個別処理
+	virtual void AfterMapChipCollision(const CollisionMapInfo& info) { (void)info; }
+
+	// めり込み防止用の微小な余白
+	static inline const float kBlank = 0.05f;
 
 	//============================================================
 	// ヒットフラッシュ

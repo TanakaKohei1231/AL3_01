@@ -143,276 +143,19 @@ void Player::Draw() {
 	Model::PostDraw();
 }
 
-void Player::ResolveMapChipCollision(const Vector3& moveDistance) {
-	// 衝突判定の初期化
-	CollisionMapInfo collisionMapInfo{};
-
-	// 移動量のコピー
-	collisionMapInfo.moveDistance = moveDistance;
-
-	// マップ衝突チェック
-	MapChipCollision(collisionMapInfo);
-
-	// 移動
-	ApplyCollisionResult(collisionMapInfo);
-
-	// 天井に接触している時の処理
-	HandleCeilingCollision(collisionMapInfo);
-
-	// 壁に接触している時の処理
-	HandleWallCollision(collisionMapInfo);
-
-	// 接地状態の切り替え処理
-	ChangeGroundState(collisionMapInfo);
+void Player::OnCollisionCeiling() {
+	// 天井に当たったら上昇速度をリセット
+	velocity_.y = 0.0f;
 }
 
-void Player::MapChipCollision(CollisionMapInfo& info) {
-	MapChipCollisionTop(info);
-	MapChipCollisionBottom(info);
-	MapChipCollisionLeft(info);
-	MapChipCollisionRight(info);
+void Player::OnCollisionWall() {
+	// 壁に接触した際の横速度減衰
+	velocity_.x *= (1.0f - kAttenuationWall);
 }
 
-void Player::MapChipCollisionTop(CollisionMapInfo& info) {
-	// 上昇あり？
-	if (info.moveDistance.y <= 0.0f) {
-		return;
-	}
-
-	// 移動後の4つの角の座標
-	std::array<Vector3, kNumCorner> positionsNew{};
-
-	for (uint32_t i = 0; i < positionsNew.size(); i++) {
-		positionsNew[i] = CornerPosition(worldTransform_.translation_ + info.moveDistance, static_cast<Corner>(i));
-	}
-
-	MapChipType mapChipType;
-	MapChipType mapChipTypeNext;
-
-	// 真上の判定を行う
-	bool isHit = false;
-	IndexSet indexSet{};
-	IndexSet hitIndexSet{};
-
-	// 左上点の判定
-	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kLeftTop]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex + 1);
-
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
-		isHit = true;
-		hitIndexSet = indexSet;
-	}
-
-	// 右上点の判定
-	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kRightTop]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex + 1);
-
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
-		isHit = true;
-		hitIndexSet = indexSet;
-	}
-
-	if (isHit) {
-		IndexSet indexSetNow = mapChipField_->GetMapChipIndexSetByPosition(CornerPosition(worldTransform_.translation_, kLeftTop));
-
-		// 移動前と移動後でY方向のセル番号が変わった場合だけ、天井として処理する
-		if (indexSetNow.yIndex != hitIndexSet.yIndex) {
-			Rect rect = mapChipField_->RectByIndex(hitIndexSet.xIndex, hitIndexSet.yIndex);
-
-			info.moveDistance.y = std::max(0.0f, rect.bottom - worldTransform_.translation_.y - height_ / 2.0f - kBlank);
-
-			info.isHitCeiling = true;
-		}
-	}
-}
-
-void Player::MapChipCollisionBottom(CollisionMapInfo& info) {
-	// 下降あり？
-	if (info.moveDistance.y >= 0.0f) {
-		return;
-	}
-
-	// 移動後の4つの角の座標
-	std::array<Vector3, kNumCorner> positionsNew{};
-
-	for (uint32_t i = 0; i < positionsNew.size(); ++i) {
-		positionsNew[i] = CornerPosition(worldTransform_.translation_ + info.moveDistance, static_cast<Corner>(i));
-	}
-
-	MapChipType mapChipType;
-	MapChipType mapChipTypeNext;
-
-	// 真下の当たり判定を行う
-	bool isHit = false;
-	IndexSet indexSet{};
-	IndexSet hitIndexSet{};
-
-	// 左下点の判定
-	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kLeftBottom]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex - 1);
-
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
-		isHit = true;
-		hitIndexSet = indexSet;
-	}
-
-	// 右下点の判定
-	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kRightBottom]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex - 1);
-
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
-		isHit = true;
-		hitIndexSet = indexSet;
-	}
-
-	if (isHit) {
-		IndexSet indexSetNow = mapChipField_->GetMapChipIndexSetByPosition(CornerPosition(worldTransform_.translation_, kLeftBottom));
-
-		// 移動前と移動後でY方向のセル番号が変わった場合だけ、地面として処理する
-		if (indexSetNow.yIndex != hitIndexSet.yIndex) {
-			Rect rect = mapChipField_->RectByIndex(hitIndexSet.xIndex, hitIndexSet.yIndex);
-
-			info.moveDistance.y = std::min(0.0f, rect.top - worldTransform_.translation_.y + height_ / 2.0f + kBlank);
-
-			info.onGround = true;
-		}
-	}
-}
-
-void Player::MapChipCollisionLeft(CollisionMapInfo& info) {
-	// 左移動あり？
-	if (info.moveDistance.x >= 0.0f) {
-		return;
-	}
-
-	// 移動後の4つの角の座標
-	std::array<Vector3, kNumCorner> positionsNew{};
-
-	for (uint32_t i = 0; i < positionsNew.size(); ++i) {
-		positionsNew[i] = CornerPosition(worldTransform_.translation_ + info.moveDistance, static_cast<Corner>(i));
-	}
-
-	MapChipType mapChipType;
-	MapChipType mapChipTypeNext;
-
-	// 真左の当たり判定を行う
-	bool isHit = false;
-	IndexSet indexSet{};
-	IndexSet hitIndexSet{};
-
-	// 左上点の判定
-	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kLeftTop]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex + 1, indexSet.yIndex);
-
-	// 隣接セルがどちらもブロックなら床や天井扱いなので、壁としては扱わない
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
-		isHit = true;
-		hitIndexSet = indexSet;
-	}
-
-	// 左下点の判定
-	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kLeftBottom]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex + 1, indexSet.yIndex);
-
-	// 隣接セルがどちらもブロックなら床や天井扱いなので、壁としては扱わない
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
-		isHit = true;
-		hitIndexSet = indexSet;
-	}
-
-	if (isHit) {
-		// 現在座標が属するマップチップ番号
-		IndexSet indexSetNow = mapChipField_->GetMapChipIndexSetByPosition(CornerPosition(worldTransform_.translation_, kLeftTop));
-
-		// 移動前と移動後でX方向のセル番号が変わった場合だけ、壁として処理する
-		if (indexSetNow.xIndex != hitIndexSet.xIndex) {
-			// めり込み先ブロックの範囲矩形
-			Rect rect = mapChipField_->RectByIndex(hitIndexSet.xIndex, hitIndexSet.yIndex);
-
-			// めり込みを排除する方向に移動量を設定する
-			info.moveDistance.x = std::min(0.0f, rect.right - worldTransform_.translation_.x + width_ / 2.0f + kBlank);
-
-			// 壁に当たったことを記録する
-			info.isHitWall = true;
-		}
-	}
-}
-
-void Player::MapChipCollisionRight(CollisionMapInfo& info) {
-	// 右移動あり？
-	if (info.moveDistance.x <= 0.0f) {
-		return;
-	}
-
-	// 移動後の4つの角の座標
-	std::array<Vector3, kNumCorner> positionsNew{};
-
-	for (uint32_t i = 0; i < positionsNew.size(); ++i) {
-		positionsNew[i] = CornerPosition(worldTransform_.translation_ + info.moveDistance, static_cast<Corner>(i));
-	}
-
-	MapChipType mapChipType;
-	MapChipType mapChipTypeNext;
-
-	// 真右の当たり判定を行う
-	bool isHit = false;
-	IndexSet indexSet{};
-	IndexSet hitIndexSet{};
-
-	// 右上点の判定
-	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kRightTop]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex - 1, indexSet.yIndex);
-
-	// 隣接セルがどちらもブロックなら床や天井扱いなので、壁としては扱わない
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
-		isHit = true;
-		hitIndexSet = indexSet;
-	}
-
-	// 右下点の判定
-	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kRightBottom]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex - 1, indexSet.yIndex);
-
-	// 隣接セルがどちらもブロックなら床や天井扱いなので、壁としては扱わない
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
-		isHit = true;
-		hitIndexSet = indexSet;
-	}
-
-	if (isHit) {
-		// 現在座標が属するマップチップ番号
-		IndexSet indexSetNow = mapChipField_->GetMapChipIndexSetByPosition(CornerPosition(worldTransform_.translation_, kRightTop));
-
-		// 移動前と移動後でX方向のセル番号が変わった場合だけ、壁として処理する
-		if (indexSetNow.xIndex != hitIndexSet.xIndex) {
-			// めり込み先ブロックの範囲矩形
-			Rect rect = mapChipField_->RectByIndex(hitIndexSet.xIndex, hitIndexSet.yIndex);
-
-			// めり込みを排除する方向に移動量を設定する
-			info.moveDistance.x = std::max(0.0f, rect.left - worldTransform_.translation_.x - width_ / 2.0f - kBlank);
-
-			// 壁に当たったことを記録する
-			info.isHitWall = true;
-		}
-	}
-}
-
-void Player::ApplyCollisionResult(const CollisionMapInfo& info) {
-	worldTransform_.translation_ += info.moveDistance;
-}
-
-void Player::HandleCeilingCollision(const CollisionMapInfo& info) {
-	if (info.isHitCeiling) {
-		velocity_.y = 0.0f;
-	}
+void Player::AfterMapChipCollision(const CollisionMapInfo& info) {
+	// プレイヤーの接地状態を更新
+	ChangeGroundState(info);
 }
 
 // 地面に接触してる場合の処理
@@ -425,12 +168,6 @@ void Player::HandleGroundCollision(const CollisionMapInfo& info) {
 		velocity_.x *= (1.0f - kAttenuationLanding);
 
 		velocity_.y = 0.0f;
-	}
-}
-
-void Player::HandleWallCollision(const CollisionMapInfo& info) {
-	if (info.isHitWall) {
-		velocity_.x *= (1.0f - kAttenuationWall);
 	}
 }
 
@@ -508,17 +245,6 @@ void Player::OnCollision(const BaseEnemy* enemy) {
 	// 通常死亡状態にする
 	deathType_ = DeathType::kNormal;
 	isDead_ = true;
-}
-
-Vector3 Player::CornerPosition(const Vector3& center, Corner corner) {
-	Vector3 offsetTable[static_cast<uint32_t>(Corner::kNumCorner)] = {
-		Vector3(width_ / 2.0f,	 -height_ / 2.0f,	 0.0f),  // 右下
-		Vector3(-width_ / 2.0f,	 -height_ / 2.0f,	 0.0f), // 左下
-		Vector3(width_ / 2.0f,	 height_ / 2.0f,	 0.0f),   // 右上
-		Vector3(-width_ / 2.0f,	 height_ / 2.0f,	 0.0f)   // 左上
-	};
-
-	return center + offsetTable[static_cast<uint32_t>(corner)];
 }
 
 void Player::CorrectPositionInScreen() {
@@ -630,4 +356,10 @@ bool Player::ShouldDraw() const {
 
 	// 通常死亡では描画しない
 	return false;
+}
+
+void Player::OnFallDeath() {
+	// 通常死亡として処理
+	deathType_ = DeathType::kNormal;
+	isDead_ = true;
 }

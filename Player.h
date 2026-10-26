@@ -9,21 +9,6 @@
 class MapChipField;
 class BaseEnemy;
 
-enum Corner {
-	kRightBottom,
-	kLeftBottom,
-	kRightTop,
-	kLeftTop,
-	kNumCorner
-};
-
-struct CollisionMapInfo {
-	bool isHitCeiling = false;
-	bool onGround = false;
-	bool isHitWall = false;
-	KamataEngine::Vector3 moveDistance = {};
-};
-
 class Player : public BaseCharacter {
   public:
 	// 描画処理
@@ -41,8 +26,6 @@ class Player : public BaseCharacter {
 	//============================================================
 	// ゲッター・セッター
 	//============================================================
-
-	void SetMapChipField(MapChipField* mapChipField) { mapChipField_ = mapChipField; }
 
 	// 画面端挟まれ死亡判定を有効にするか
 	void SetScreenSqueezeDeathEnabled(bool enabled) { isScreenSqueezeDeathEnabled_ = enabled; }
@@ -89,11 +72,6 @@ class Player : public BaseCharacter {
 	// 接地フラグ
 	bool isGround_ = true;
 
-	// マップチップフィールド
-	MapChipField* mapChipField_ = nullptr;
-
-	KamataEngine::Vector3 CornerPosition(const KamataEngine::Vector3& center, Corner corner);
-
 	// 重力加速度
 	static inline const float kGravityAcceleration = 0.07f;
 
@@ -122,6 +100,9 @@ class Player : public BaseCharacter {
 
 	// 描画するべきか
 	bool ShouldDraw() const;
+
+	// 落下死亡時
+	void OnFallDeath() override;
 
 
 	// 接地時に減衰するx速度
@@ -158,34 +139,20 @@ class Player : public BaseCharacter {
 	// マップチップ回り
 	//============================================================
 
-
-	// マップチップとの衝突を解決する
-	void ResolveMapChipCollision(const KamataEngine::Vector3& velocity);
-
-	void MapChipCollision(CollisionMapInfo& info);
-	void MapChipCollisionTop(CollisionMapInfo& info);
-	void MapChipCollisionBottom(CollisionMapInfo& info);
-	void MapChipCollisionLeft(CollisionMapInfo& info);
-	void MapChipCollisionRight(CollisionMapInfo& info);
-
-	// 衝突結果を反映して移動させる
-	void ApplyCollisionResult(const CollisionMapInfo& info);
-
-	// 天井に接触している時の処理
-	void HandleCeilingCollision(const CollisionMapInfo& info);
-
 	// 地面に接触している時の処理
 	void HandleGroundCollision(const CollisionMapInfo& info);
-
-	// 壁に接触してるときの処理
-	void HandleWallCollision(const CollisionMapInfo& info);
 
 	// 地面に触れてるときの処理
 	void ChangeGroundState(const CollisionMapInfo& info);
 
-	// めり込み防止用の微小な余白
-	static inline const float kBlank = 0.05f;
+	// 天井への衝突時の処理
+	void OnCollisionCeiling() override;
 
+	// 壁への衝突時の処理
+	void OnCollisionWall() override;
+
+	// マップ衝突後の個別処理
+	void AfterMapChipCollision(const CollisionMapInfo& info) override;
 
 
 	//============================================================

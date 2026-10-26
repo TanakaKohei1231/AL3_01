@@ -66,6 +66,9 @@ class GameScene : public IScene {
 	// デバッグカメラの有効化フラグ
 	bool isDebugCameraActive_ = false;
 
+	// 落下死亡判定のY座標
+	static inline const float kFallDeathY = -2.0f;
+
 	// ゲームのフェーズ
 	enum class Phase {
 		kFadeIn,  // フェードイン

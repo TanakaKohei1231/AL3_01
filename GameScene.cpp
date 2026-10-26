@@ -71,12 +71,6 @@ void GameScene::Initialize() {
 	GuardEffect::SetModel(modelManager->Load("ring", true));
 	GuardEffect::SetCamera(camera_.get());
 
-	// 調整項目の登録
-	Player::RegisterGlobalVariables();
-
-	// 調整項目の適用
-	Player::ApplyGlobalVariables();
-
 	// フィールドのオブジェクトを生成
 	GenerateFieldObjects();
 

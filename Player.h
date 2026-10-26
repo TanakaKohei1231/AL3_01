@@ -2,6 +2,8 @@
 #include "KamataEngine.h"
 #include "Collision.h"
 #include "LRDirection.h"
+#include "BaseCharacter.h"
+#include "PlayerBehavior.h"
 
 // 前方宣言
 class MapChipField;
@@ -22,17 +24,10 @@ struct CollisionMapInfo {
 	KamataEngine::Vector3 moveDistance = {};
 };
 
-class Player {
+class Player : public BaseCharacter {
   public:
-
-	// 初期化処理
-	void Initialize(KamataEngine::Camera* camera, KamataEngine::Vector3 position);
-
-	// 更新処理
-	void Update();
-
 	// 描画処理
-	void Draw();
+	void Draw() override;
 
 	// 敵と当たった時の処理
 	void OnCollision(const BaseEnemy* enemy);
@@ -41,12 +36,6 @@ class Player {
 	void RequestKnockback () {
 		isKnockbackRequested_ = true;
 	}
-
-	// 調整項目を登録
-	static void RegisterGlobalVariables();
-
-	// 調整項目を適用
-	static void ApplyGlobalVariables();
 
 
 	//============================================================
@@ -59,35 +48,34 @@ class Player {
 	void SetScreenSqueezeDeathEnabled(bool enabled) { isScreenSqueezeDeathEnabled_ = enabled; }
 
 	const KamataEngine::WorldTransform& GetWorldTransform();
-	KamataEngine::Vector3 GetWorldPosition() const;
-	const KamataEngine::Vector3& GetVelocity() const { return velocity_; }
-
-	// 敵とのあたり判定
-	AABB GetAABB();
 
 	// 死亡しているか
 	bool IsDead() const { return isDead_; }
 
-	// 攻撃中か
-	bool IsAttack() const { return behavior_ == Behavior::kAttack; }
-
 	LRDirection GetLRDirection() const { return lrDirection_; }
 
+	// 接地しているか
+	bool IsGround() const { return isGround_; }
 
+	// プレイヤーの向きを変更
+	void TurnTo(LRDirection direction);
+
+	// ノックバックの無敵状態を設定
+	void SetKnockbackInvincible(bool isInvincible) { isKnockbackInvincible_ = isInvincible; }
 
   private:
 
-	// ワールド変換データ
-	KamataEngine::WorldTransform worldTransform_;
+	// プレイヤー固有の初期化
+	void InitializeInternal() override;
 
-	// モデル
-	KamataEngine::Model* model_ = nullptr;
+	// 振る舞い更新前の処理
+	void BeforeBehaviorUpdate() override;
 
-	// カメラ
-	KamataEngine::Camera* camera_ = nullptr;
+	// 振る舞い更新後の処理
+	void AfterBehaviorUpdate() override;
 
-	// 速度
-	KamataEngine::Vector3 velocity_ = {};
+	// ワールド変換更新後の処理
+	void AfterTransformUpdate() override;
 
 	// 向き
 	LRDirection lrDirection_ = LRDirection::kRight;
@@ -116,24 +104,6 @@ class Player {
 	static inline const float kGroundCheckOffset = 0.1f;
 
 
-
-	//============================================================
-	// 振る舞い
-	//============================================================
-
-	enum class Behavior {
-		kRoot,         // 通常状態
-		kAttack,       // 攻撃中
-		kKnockback,    // ノックバック
-		kSqueezeDeath, // 挟まれ死亡演出
-		kUnknown
-	};
-
-	Behavior behavior_ = Behavior::kRoot;
-	Behavior behaviorRequest_ = Behavior::kUnknown;
-
-
-
 	//============================================================
 	// 死亡周り
 	//============================================================
@@ -147,36 +117,12 @@ class Player {
 
 	DeathType deathType_ = DeathType::kNone;
 
-	// デスフラグ
-	bool isDead_ = false;
-
 	// 死亡演出が終わったか
 	bool isDeathMotionFinished_ = false;
 
 	// 描画するべきか
 	bool ShouldDraw() const;
 
-	//============================================================
-	// 通常状態
-	//============================================================
-
-	// 通常行動の初期化
-	void BehaviorRootInitialize();
-
-	// 通常行動更新
-	void BehaviorRootUpdate();
-
-	// 歩行時の加速度
-	static inline float kAcceleration = 0.02f;
-
-	// 空中での左右加速度倍率
-	static inline float kAirAccelerationRate = 0.7f;
-
-	// 歩行の方向転換時の急ブレーキでのx速度減衰量
-	static inline float kAttenuation = 0.1f;
-
-	// 歩行の最高速
-	static inline float kLimitRunSpeed = 0.3f;
 
 	// 接地時に減衰するx速度
 	static inline float kAttenuationLanding = 0.05f;
@@ -187,96 +133,24 @@ class Player {
 	// 旋回にかかる時間<秒>
 	static inline float kTurnTime = 0.3f;
 
-	// ジャンプの初速
-	static inline float kJumpAcceleration = 0.8f;
-
-
-
-	//============================================================
-	// ノックバック
-	//============================================================
-
-
-	// ノックバックのフェーズ
-	enum class KnockbackPhase {
-		kKnockback, // 吹っ飛ばされる
-		kAfter      // 後隙
-	};
-
-	// ノックバックの初期化
-	void BehaviorKnockInitialize();
-
-	// ノックバックの更新
-	void BehaviorKnockUpdate();
 
 	// ノックバックの吹っ飛ばされている時間かどうか
-	bool IsKnockbackInvincible() const { return (behavior_ == Behavior::kKnockback && knockbackPhase_ == KnockbackPhase::kKnockback); }
-
+	bool IsKnockbackInvincible() const { return isKnockbackInvincible_; }
 
 	// ノックバック要求フラグ
 	bool isKnockbackRequested_ = false;
 
-	// ノックバックのフェーズ
-	KnockbackPhase knockbackPhase_ = KnockbackPhase::kKnockback;
+	// ノックバックによる無敵状態
+	bool isKnockbackInvincible_ = false;
 
-	// ノックバック経過時間
-	float knockbackParameter_ = 0.0f;
-
-	// ノックバックで吹っ飛ばされる時間
-	static inline float kKnockbackTime = 0.15f;
-
-	// ノックバック後の硬直時間
-	static inline float kKnockbackAfterTime = 0.1f;
-
-	// ノックバックの横速度
-	static inline float kKnockbackSpeed = 0.3f;
-
-	// ノックバック後の減速率
-	static inline float kKnockbackAttenuation = 0.15f;
-
-
-
-	//============================================================
-	// 攻撃行動
-	//============================================================
-
-	// 攻撃のフェーズ
-	enum class AttackPhase {
-		kBefore,    // 前隙
-		kAttack,    // 攻撃
-		kAfter      // 後隙
-	};
-
-	// 攻撃のフェーズ
-	AttackPhase attackPhase_ = AttackPhase::kBefore;
-
-
-	// 攻撃行動の初期化
-	void BehaviorAttackInitialize();
-
-	// 攻撃行動更新
-	void BehaviorAttackUpdate();
-
-	// 攻撃の時間
-	float attackParameter_ = 0.0f;
+	// 攻撃エフェクトを表示するか
+	bool isAttackEffectVisible_ = false;
 
 	// 攻撃エフェクト用モデル
 	KamataEngine::Model* modelAttack_ = nullptr;
 
 	// 攻撃エフェクト用ワールド変換データ
 	KamataEngine::WorldTransform worldTransformAttack_;
-
-	// 前隙
-	static inline float kAttackBeforeTime = 0.2f;
-
-	// 攻撃の時間
-	static inline float kAttackTime = 0.2f;
-
-	// 後隙
-	static inline float kAttackAfterTime = 0.2f;
-
-	// 攻撃時の突進速度
-	static inline float kAttackMoveSpeed = 0.5f;
 
 
 
@@ -309,10 +183,6 @@ class Player {
 	// 地面に触れてるときの処理
 	void ChangeGroundState(const CollisionMapInfo& info);
 
-	// キャラクターの当たり判定サイズ
-	static inline const float kWidth = 0.8f;
-	static inline const float kHeight = 0.8f;
-
 	// めり込み防止用の微小な余白
 	static inline const float kBlank = 0.05f;
 
@@ -337,21 +207,8 @@ class Player {
 	// 挟まれ死亡を開始する
 	void StartSqueezeDeath();
 
-	// 挟まれ死亡演出の初期化
-	void BehaviorSqueezeDeathInitialize();
-
-	// 挟まれ死亡演出の更新
-	void BehaviorSqueezeDeathUpdate();
-
-
-
 	// 画面端挟まれ死亡判定を有効にするか
 	bool isScreenSqueezeDeathEnabled_ = false;
-
-	// 挟まれ死亡演出タイマー
-	float squeezeDeathTimer_ = 0.0f;
-
-
 
 	// 画面端接触判定の許容誤差
 	static inline const float kScreenEdgeCheckTolerance = 0.05f;
@@ -359,21 +216,17 @@ class Player {
 	// 壁確認用の微小なオフセット
 	static inline const float kScreenSqueezeCheckOffset = 0.05f;
 
-	// 挟まれ死亡時の上方向初速
-	static inline const float kSqueezeDeathJumpVelocity = 0.5f;
-
-	// 挟まれ死亡時の重力
-	static inline const float kSqueezeDeathGravity = 0.015f;
-
-	// 挟まれ死亡時のX回転速度
-	static inline const float kSqueezeDeathRotationSpeed = kPi * 2.0f;
-
-	// 挟まれ死亡演出時間
-	static inline const float kSqueezeDeathMotionTime = 1.5f;
 
 	// 画面端補正用の範囲
 	static inline const float kScreenLeftLimit = -11.0f;
 	static inline const float kScreenRightLimit = 11.0f;
 	static inline const float kScreenBottomLimit = -8.0f;
 	static inline const float kScreenTopLimit = 10.0f;
+
+
+	// ステート移行中の既存処理へのアクセス
+	friend class PlayerRootBehavior;
+	friend class PlayerAttackBehavior;
+	friend class PlayerKnockbackBehavior;
+	friend class PlayerSqueezeDeathBehavior;
 };

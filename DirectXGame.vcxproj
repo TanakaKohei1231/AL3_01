@@ -178,9 +178,11 @@ xcopy "$(ProjectDir)..\External\KamataEngine\shaders" "$(ProjectDir)Resources\En
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BaseCharacter.cpp" />
     <ClCompile Include="BaseEffect.cpp" />
     <ClCompile Include="BaseEnemy.cpp" />
     <ClCompile Include="CameraController.cpp" />
+    <ClCompile Include="CharacterEnemyBehavior.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="DeathParticles.cpp" />
     <ClCompile Include="Ease.cpp" />
@@ -192,11 +194,13 @@ xcopy "$(ProjectDir)..\External\KamataEngine\shaders" "$(ProjectDir)Resources\En
     <ClCompile Include="GlobalVariables.cpp" />
     <ClCompile Include="GuardEffect.cpp" />
     <ClCompile Include="HitEffect.cpp" />
+    <ClCompile Include="ICharactersBehavior.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MapChipField.cpp" />
     <ClCompile Include="Matrix4x4Util.cpp" />
     <ClCompile Include="ModelManager.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="PlayerBehavior.cpp" />
     <ClCompile Include="Rect.cpp" />
     <ClCompile Include="ShieldEnemy.cpp" />
     <ClCompile Include="Skydome.cpp" />
@@ -205,9 +209,11 @@ xcopy "$(ProjectDir)..\External\KamataEngine\shaders" "$(ProjectDir)Resources\En
     <ClCompile Include="Vector3Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BaseCharacter.h" />
     <ClInclude Include="BaseEffect.h" />
     <ClInclude Include="BaseEnemy.h" />
     <ClInclude Include="CameraController.h" />
+    <ClInclude Include="CharacterEnemyBehavior.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="DeathParticles.h" />
     <ClInclude Include="Ease.h" />
@@ -219,12 +225,14 @@ xcopy "$(ProjectDir)..\External\KamataEngine\shaders" "$(ProjectDir)Resources\En
     <ClInclude Include="GlobalVariables.h" />
     <ClInclude Include="GuardEffect.h" />
     <ClInclude Include="HitEffect.h" />
+    <ClInclude Include="ICharactersBehavior.h" />
     <ClInclude Include="IScene.h" />
     <ClInclude Include="LRDirection.h" />
     <ClInclude Include="MapChipField.h" />
     <ClInclude Include="Matrix4x4Util.h" />
     <ClInclude Include="ModelManager.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="PlayerBehavior.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="ShieldEnemy.h" />
     <ClInclude Include="Skydome.h" />

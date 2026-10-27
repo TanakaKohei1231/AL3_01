@@ -2,6 +2,7 @@
 #include"KamataEngine.h"
 #include "GameManager.h"
 #include "ModelManager.h"
+#include "SoundManager.h"
 
 using namespace KamataEngine;
 
@@ -17,9 +18,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// ImGuiManagerインスタンスの取得
 	ImGuiManager* imGuiManager = ImGuiManager::GetInstance();
 
+	// サウンドの読み込み
+	SoundManager::GetInstance()->Initialize();
+
 	// ゲームマネージャーの生成
 	std::unique_ptr<GameManager> gameManager = std::make_unique<GameManager>();
 	gameManager->Initialize();
+
 
 	// メインループ
 	while (true) {

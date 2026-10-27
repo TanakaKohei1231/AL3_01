@@ -7,6 +7,7 @@
 #include <memory>
 #include "Ease.h"
 #include <cmath>
+#include "SoundManager.h"
 
 using namespace KamataEngine;
 
@@ -85,6 +86,9 @@ void PlayerRootBehavior::Update() {
 		// ジャンプ
 		if (input->IsPress(GameAction::kJump)) {
 			velocity += Vector3(0.0f, kJumpAcceleration, 0.0f);
+
+			// ジャンプSE
+			SoundManager::GetInstance()->PlaySe(SeType::kJump);
 		}
 
 	} else {
@@ -153,6 +157,9 @@ void PlayerAttackBehavior::Initialize() {
 
 	// 攻撃開始時に速度をリセット
 	player_->SetVelocity({0.0f, 0.0f, 0.0f});
+
+	// 攻撃SE
+	SoundManager::GetInstance()->PlaySe(SeType::kAttack);
 }
 
 
@@ -422,6 +429,9 @@ void PlayerLadderBehavior::Update() {
 
 		// 通常の左右方向へ旋回
 		player_->TurnFromLadder();
+
+		 // ジャンプSE
+		SoundManager::GetInstance()->PlaySe(SeType::kJump);
 
 		Vector3 jumpVelocity{0.0f, kJumpAcceleration, 0.0f};
 		player_->SetVelocity(jumpVelocity);

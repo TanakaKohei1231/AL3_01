@@ -5,6 +5,7 @@
 #include <cmath>
 #include <numbers>
 #include "ModelManager.h"
+#include "SoundManager.h"
 
 using namespace KamataEngine;
 
@@ -41,6 +42,9 @@ void TitleScene::Initialize() {
 	fade_ = std::make_unique<Fade>();
 	fade_->Initialize();
 	fade_->Start(Fade::Status::kFadeIn, 1.0f);
+
+	// BGM
+	SoundManager::GetInstance()->PlayBgm(BgmType::kTitle);
 }
 
 void TitleScene::Update() {
@@ -79,6 +83,9 @@ void TitleScene::Update() {
 		if (Input::GetInstance()->PushKey(DIK_SPACE)) {
 			phase_ = Phase::kFadeOut;
 			fade_->Start(Fade::Status::kFadeOut, 1.0f);
+
+			// 決定SE
+			SoundManager::GetInstance()->PlaySe(SeType::kMenuConfirm);
 		}
 		break;
 

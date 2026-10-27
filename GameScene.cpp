@@ -8,6 +8,7 @@
 #include "StageManager.h"
 #include "ModelManager.h"
 #include <algorithm>
+#include "SoundManager.h"
 
 using namespace KamataEngine;
 
@@ -35,6 +36,8 @@ void GameScene::Initialize() {
 	cameraController_->Initialize(camera_.get());
 	cameraController_->SetMode(CameraMode::kFollow);
 
+	// ゲームBGMを再生
+	SoundManager::GetInstance()->PlayBgm(BgmType::kGame);
 
 	ModelManager *modelManager = ModelManager::GetInstance();
 
@@ -493,6 +496,9 @@ void GameScene::ChangePhase() {
 			// デス演出フェーズに切り替え
 			phase_ = Phase::kDeath;
 
+			// 死亡SE
+			SoundManager::GetInstance()->PlaySe(SeType::kPlayerDeath);
+
 			// 自キャラの座標を取得
 			Vector3 deathParticlesPosition = player_->GetWorldPosition();
 
@@ -520,6 +526,9 @@ void GameScene::ChangePhase() {
 void GameScene::CreateHitEffect(const Vector3& position) {
 	effects_.push_back(std::unique_ptr<BaseEffect>(HitEffect::Create(position)));
 
+	// 命中SE
+	SoundManager::GetInstance()->PlaySe(SeType::kHit);
+
 	// ヒットストップを要求
 	RequestHitStop();
 
@@ -528,7 +537,11 @@ void GameScene::CreateHitEffect(const Vector3& position) {
 }
 
 void GameScene::CreateGuardEffect(const Vector3& position) {
-	effects_.push_back(std::unique_ptr<BaseEffect>(GuardEffect::Create(position))); }
+	// ガードSE
+	SoundManager::GetInstance()->PlaySe(SeType::kGuard);
+
+	effects_.push_back(std::unique_ptr<BaseEffect>(GuardEffect::Create(position)));
+}
 
 void GameScene::RequestHitStop() {
 	// 現在の残り時間より長い場合だけ更新
@@ -578,6 +591,9 @@ void GameScene::StartClear() {
 
 	// ゴールを取得済みにする
 	goal_->Collect();
+
+	// SEを流す
+	SoundManager::GetInstance()->PlaySe(SeType::kClear);
 
 	// プレイヤーのクリア演出を開始
 	player_->StartClearDirection();

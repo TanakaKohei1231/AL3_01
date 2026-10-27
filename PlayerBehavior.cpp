@@ -22,6 +22,10 @@ void PlayerRootBehavior::Initialize() {
 
 
 void PlayerRootBehavior::Update() {
+	if (player_->IsDead()) {
+		return;
+	}
+
 	GameInput* input = GameInput::GetInstance();
 
 	// はしごと重なっているか

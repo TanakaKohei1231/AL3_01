@@ -22,6 +22,21 @@ void PlayerRootBehavior::Initialize() {
 void PlayerRootBehavior::Update() {
 	GameInput* input = GameInput::GetInstance();
 
+	// はしごと重なっているか
+	if (player_->IsOnLadder()) {
+
+		// 上下どちらか一方が入力されている場合
+		bool isMoveUp = input->IsPress(GameAction::kMoveUp);
+		bool isMoveDown = input->IsPress(GameAction::kMoveDown);
+
+		if (isMoveUp != isMoveDown) {
+			// はしご移動状態へ切り替え
+			player_->RequestBehaviorChange(std::make_unique<PlayerLadderBehavior>(player_));
+
+			return;
+		}
+	}
+
 	// 現在の移動速度を取得
 	Vector3 velocity = player_->GetVelocity();
 
@@ -376,3 +391,116 @@ void PlayerSqueezeDeathBehavior::Update() {
 }
 
 void PlayerSqueezeDeathBehavior::UpdateMotion() {}
+
+//============================================================
+// はしご移動状態
+//============================================================
+
+PlayerLadderBehavior::PlayerLadderBehavior(Player* player) : player_(player) {}
+
+void PlayerLadderBehavior::Initialize() {
+	player_->isLadderClimbing_ = true;
+
+	// はしごを掴んだら背面へ旋回
+	player_->TurnToLadder();
+
+	// 移動速度をリセット
+	player_->SetVelocity({0.0f, 0.0f, 0.0f});
+
+	// 空中扱い
+	player_->isGround_ = false;
+}
+
+void PlayerLadderBehavior::Update() {
+	GameInput* input = GameInput::GetInstance();
+
+	// ジャンプで離脱
+	if (input->IsTrigger(GameAction::kJump)) {
+		player_->isLadderClimbing_ = false;
+		player_->isGround_ = false;
+
+		// 通常の左右方向へ旋回
+		player_->TurnFromLadder();
+
+		Vector3 jumpVelocity{0.0f, kJumpAcceleration, 0.0f};
+		player_->SetVelocity(jumpVelocity);
+		player_->ResolveMapChipCollision(jumpVelocity);
+
+		player_->RequestBehaviorChange(std::make_unique<PlayerRootBehavior>(player_));
+
+		return;
+	}
+
+	// はしごの範囲から離れたら通常状態へ
+	if (!player_->IsOnLadder()) {
+		player_->isLadderClimbing_ = false;
+		player_->SetVelocity({0.0f, 0.0f, 0.0f});
+
+		// 通常の左右方向へ旋回
+		player_->TurnFromLadder();
+
+		player_->RequestBehaviorChange(std::make_unique<PlayerRootBehavior>(player_));
+
+		return;
+	}
+
+	Vector3 velocity{};
+
+	// 左右入力
+	bool isMoveLeft = input->IsPress(GameAction::kMoveLeft);
+	bool isMoveRight = input->IsPress(GameAction::kMoveRight);
+
+	if (isMoveLeft != isMoveRight) {
+		if (isMoveLeft) {
+			velocity.x = -kLadderHorizontalSpeed;
+		} else {
+			velocity.x = kLadderHorizontalSpeed;
+		}
+	}
+
+	// 上下入力
+	bool isMoveUp = input->IsPress(GameAction::kMoveUp);
+	bool isMoveDown = input->IsPress(GameAction::kMoveDown);
+
+	if (isMoveUp != isMoveDown) {
+		if (isMoveUp) {
+			velocity.y = kClimbSpeed;
+		} else {
+			velocity.y = -kClimbSpeed;
+		}
+	}
+
+	// 移動と衝突判定
+	player_->SetVelocity(velocity);
+	player_->ResolveMapChipCollision(velocity);
+
+	// 上へ登っている場合だけ、上端への乗り移りを確認
+	if (velocity.y > 0.0f) {
+		if (player_->TryFinishLadderClimb()) {
+			player_->isLadderClimbing_ = false;
+
+			player_->RequestBehaviorChange(std::make_unique<PlayerRootBehavior>(player_));
+
+			return;
+		}
+	}
+
+	// 移動後にはしごの外へ出た場合
+	if (!player_->IsOnLadder()) {
+		player_->isLadderClimbing_ = false;
+		player_->SetVelocity({0.0f, 0.0f, 0.0f});
+
+		// 通常の左右方向へ旋回
+		player_->TurnFromLadder();
+
+		player_->RequestBehaviorChange(std::make_unique<PlayerRootBehavior>(player_));
+
+		return;
+	}
+
+	// 昇降中は空中状態
+	player_->isGround_ = false;
+}
+
+void PlayerLadderBehavior::UpdateMotion() {
+}

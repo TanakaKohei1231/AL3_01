@@ -62,8 +62,10 @@ void GameScene::Initialize() {
 	debugCamera_->SetFarZ(camera_->farZ);
 
 	// ブロック
-	modelBlock_.reset(Model::CreateFromOBJ("block", true));
-	blockTextureHandle_ = TextureManager::Load("block/block.png");
+	modelBlock_ = modelManager->Load("block", true);
+
+	// はしご
+	modelLadder_ = modelManager->Load("Ladder", true);
 
 	HitEffect::SetModel(modelManager->Load("particle", true));
 	HitEffect::SetCamera(camera_.get());
@@ -149,6 +151,12 @@ void GameScene::Draw() {
 		}
 	}
 
+	// はしご描画
+	for (const auto& worldTransform : worldTransformLadders_) {
+		modelLadder_->Draw(*worldTransform, *camera_);
+	}
+
+
 	Model::PostDraw();
 
 	player_->Draw();
@@ -211,6 +219,26 @@ void GameScene::GenerateFieldObjects() {
 
 			case MapChipType::kEnemy: {
 				GenerateEnemy(mapPosition, mapChipField_->GetMapChipSubIDByIndex(j, i));
+
+				break;
+			}
+
+			case MapChipType::kLadder: {
+				// はしごのワールド変換を生成
+				auto worldTransform = std::make_unique<WorldTransform>();
+
+				worldTransform->Initialize();
+				worldTransform->translation_ = mapPosition;
+				worldTransform->rotation_.y = kPi;
+				worldTransform->scale_ = {0.5f, 0.5f, 0.5f};
+
+				// ワールド行列を更新
+				WorldTransformUpdate(*worldTransform);
+
+				// リストに追加
+				worldTransformLadders_.push_back(std::move(worldTransform));
+
+				break;
 			}
 			}
 		}

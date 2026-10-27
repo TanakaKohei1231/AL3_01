@@ -154,6 +154,9 @@ class BaseCharacter {
 	void MapChipCollisionLeft(CollisionMapInfo& info);
 	void MapChipCollisionRight(CollisionMapInfo& info);
 
+	// はしご最上段への着地を許可するか
+	virtual bool CanLandOnLadder() const { return true; }
+
 	// 衝突結果を反映して移動
 	void ApplyCollisionResult(const CollisionMapInfo& info);
 

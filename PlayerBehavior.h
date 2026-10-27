@@ -150,3 +150,24 @@ class PlayerSqueezeDeathBehavior : public ICharactersBehavior {
 	// 挟まれ死亡演出時間
 	static inline const float kSqueezeDeathMotionTime = 1.5f;
 };
+
+class PlayerLadderBehavior : public ICharactersBehavior {
+  public:
+	explicit PlayerLadderBehavior(Player* player);
+
+	void Initialize() override;
+	void Update() override;
+	void UpdateMotion() override;
+
+  private:
+	Player* player_ = nullptr;
+
+	// はしごの昇降速度
+	static inline const float kClimbSpeed = 0.15f;
+
+	// はしごの左右移動速度
+	static inline const float kLadderHorizontalSpeed = 0.03f;
+
+	// はしごから離れる際のジャンプ初速
+	static inline const float kJumpAcceleration = 0.8f;
+};

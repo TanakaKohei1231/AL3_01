@@ -11,6 +11,7 @@ namespace {
 		{'B', MapChipType::kBlock},
 		{'P', MapChipType::kPlayer},
 		{'E', MapChipType::kEnemy},
+		{'L', MapChipType::kLadder},
 	};
 
 } // namespace
@@ -134,4 +135,20 @@ Rect MapChipField::RectByIndex(uint32_t xIndex, uint32_t yIndex) {
 	rect.bottom = center.y - kBlockHeight / 2.0f;
 	rect.top = center.y + kBlockHeight / 2.0f;
 	return rect;
+}
+
+bool MapChipField::IsLadderTop(uint32_t xIndex, uint32_t yIndex) {
+	// 指定セルがはしごでなければ対象外
+	if (GetMapChipTypeByIndex(xIndex, yIndex) != MapChipType::kLadder) {
+		return false;
+	}
+
+	// 最上段でなければならない
+	if (yIndex > 0) {
+		if (GetMapChipTypeByIndex(xIndex, yIndex - 1) == MapChipType::kLadder) {
+			return false;
+		}
+	}
+
+	return true;
 }

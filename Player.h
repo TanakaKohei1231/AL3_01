@@ -46,6 +46,18 @@ class Player : public BaseCharacter {
 	// ノックバックの無敵状態を設定
 	void SetKnockbackInvincible(bool isInvincible) { isKnockbackInvincible_ = isInvincible; }
 
+	// はしごの上にいるか
+	bool IsOnLadder() const;
+
+	// 指定したY軸角度へ滑らかに旋回する
+	void TurnToAngle(float targetRotationY);
+
+	// はしごを掴むときの旋回
+	void TurnToLadder();
+
+	// はしごから離れたときの旋回
+	void TurnFromLadder();
+
   private:
 
 	// プレイヤー固有の初期化
@@ -81,6 +93,20 @@ class Player : public BaseCharacter {
 	// 接地確認用の微小な下方向オフセット
 	static inline const float kGroundCheckOffset = 0.1f;
 
+	// はしごを昇降しているか
+	bool isLadderClimbing_ = false;
+
+	// はしご最上段へ着地できるか
+	bool CanLandOnLadder() const override { return !isLadderClimbing_; }
+
+	// はしごを登り切った場合、上面へ移動する
+	bool TryFinishLadderClimb();
+
+	// 旋回先のY軸角度
+	float turnTargetRotationY_ = 0.0f;
+
+	// はしご中の背面角度
+	static inline const float kLadderRotationY = 0.0f;
 
 	//============================================================
 	// 死亡周り
@@ -184,6 +210,7 @@ class Player : public BaseCharacter {
 	static inline const float kScreenSqueezeCheckOffset = 0.05f;
 
 
+
 	// 画面端補正用の範囲
 	static inline const float kScreenLeftLimit = -11.0f;
 	static inline const float kScreenRightLimit = 11.0f;
@@ -196,4 +223,5 @@ class Player : public BaseCharacter {
 	friend class PlayerAttackBehavior;
 	friend class PlayerKnockbackBehavior;
 	friend class PlayerSqueezeDeathBehavior;
+	friend class PlayerLadderBehavior;
 };

@@ -273,7 +273,13 @@ void BaseCharacter::MapChipCollisionBottom(CollisionMapInfo& info) {
 	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
 	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex - 1);
 
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
+	// 着地できる通常ブロックか
+	bool isBlockGround = mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock;
+
+	// はしご最上段に着地できるか
+	bool isLadderGround = CanLandOnLadder() && mapChipField_->IsLadderTop(indexSet.xIndex, indexSet.yIndex);
+
+	if (isBlockGround || isLadderGround) {
 		isHit = true;
 		hitIndexSet = indexSet;
 	}
@@ -283,7 +289,13 @@ void BaseCharacter::MapChipCollisionBottom(CollisionMapInfo& info) {
 	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
 	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex - 1);
 
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
+	// 着地できる通常ブロックか
+	isBlockGround = mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock;
+
+	// はしご最上段に着地できるか
+	isLadderGround = CanLandOnLadder() && mapChipField_->IsLadderTop(indexSet.xIndex, indexSet.yIndex);
+
+	if (isBlockGround || isLadderGround) {
 		isHit = true;
 		hitIndexSet = indexSet;
 	}

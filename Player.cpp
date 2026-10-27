@@ -23,11 +23,77 @@ void Player::TurnTo(LRDirection direction) {
 	// 向きを変更
 	lrDirection_ = direction;
 
-	// 旋回開始時の角度を保存
-	turnFirstRotationY_ = worldTransform_.rotation_.y;
+	// 新しい方向へ旋回
+	if (direction == LRDirection::kRight) {
+		TurnToAngle(kPi / 2.0f);
+	} else {
+		TurnToAngle(kPi * 3.0f / 2.0f);
+	}
+}
+
+void Player::TurnToAngle(float targetRotationY) {
+	// 現在角度を取得
+	float currentRotationY = worldTransform_.rotation_.y;
+
+	// 目標角度との差分を求める
+	float difference = targetRotationY - currentRotationY;
+
+	// 差分を -π ～ π の範囲に収める
+	difference = std::remainder(difference, 2.0f * kPi);
+
+	// 現在角度を旋回開始角度として保存
+	turnFirstRotationY_ = currentRotationY;
+
+	// 最短経路の目標角度を設定
+	turnTargetRotationY_ = currentRotationY + difference;
 
 	// 旋回タイマーを設定
 	turnTimer_ = kTurnTime;
+}
+
+void Player::TurnToLadder() {
+	// 背面を向く
+	TurnToAngle(kLadderRotationY);
+}
+
+void Player::TurnFromLadder() {
+	// はしごを掴む前の左右方向に戻す
+	if (lrDirection_ == LRDirection::kRight) {
+		TurnToAngle(kPi / 2.0f);
+	} else {
+		TurnToAngle(kPi * 3.0f / 2.0f);
+	}
+}
+
+bool Player::IsOnLadder() const {
+	if (!mapChipField_) {
+		return false;
+	}
+
+	// はしご判定用の座標
+	const Vector3 center = worldTransform_.translation_;
+
+	const Vector3 checkPositions[] = {
+	    center,
+	    {center.x, center.y + height_ * 0.35f,                     center.z},
+	    {center.x, center.y - height_ * 0.35f,                     center.z},
+
+	    // はしごの最上段に立った状態から降りるための判定
+	    {center.x, center.y - height_ / 2.0f - kGroundCheckOffset, center.z}
+	};
+
+	// いずれかの点がはしごの範囲内にあるか
+	for (const Vector3& position : checkPositions) {
+		IndexSet indexSet = mapChipField_->GetMapChipIndexSetByPosition(position);
+
+		MapChipType type = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
+
+		if (type == MapChipType::kLadder) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void Player::InitializeInternal() {
@@ -46,6 +112,10 @@ void Player::InitializeInternal() {
 
 	// モデルの向きに合わせてY軸回りに90度回転させる
 	worldTransform_.rotation_.y = kPi / 2.0f;
+
+	turnTargetRotationY_ = worldTransform_.rotation_.y;
+	turnFirstRotationY_ = worldTransform_.rotation_.y;
+	turnTimer_ = 0.0f;
 
 	worldTransformAttack_.Initialize();
 	worldTransformAttack_.translation_ = worldTransform_.translation_;
@@ -92,26 +162,23 @@ void Player::AfterBehaviorUpdate() {
 
 	// 旋回制御
 	if (turnTimer_ > 0.0f) {
-		// 旋回タイマーを1/60秒カウントダウンする
+		// 旋回タイマーを更新
 		turnTimer_ -= 1.0f / 60.0f;
 
-		// 左右の自キャラ角度テーブル
-		float destinationRotationYTable[] = {
-		    kPi / 2.0f,        // 右
-		    kPi * 3.0f / 2.0f, // 左
-		};
-
-		// 状態に応じた角度を取得する
-		float destinationRotationY = destinationRotationYTable[static_cast<uint32_t>(lrDirection_)];
-
-		// 0.0f から 1.0f に進む補間割合
+		// 補間割合
 		float t = 1.0f - std::clamp(turnTimer_ / kTurnTime, 0.0f, 1.0f);
 
-		// イージングをかける
+		// イージング
 		float easedT = Ease::EaseInOut(t);
 
-		// 自キャラの角度を設定する
-		worldTransform_.rotation_.y = std::lerp(turnFirstRotationY_, destinationRotationY, easedT);
+		// 目標角度へ補間
+		worldTransform_.rotation_.y = std::lerp(turnFirstRotationY_, turnTargetRotationY_, easedT);
+
+		// 完了したら正確に目標角度へ
+		if (turnTimer_ <= 0.0f) {
+			worldTransform_.rotation_.y = turnTargetRotationY_;
+			turnTimer_ = 0.0f;
+		}
 	}
 }
 
@@ -131,6 +198,8 @@ void Player::Draw() {
 
 	Model::PreDraw();
 
+	model_->Draw(worldTransform_, *camera_, &objectColor_);
+
 	// 攻撃エフェクトの描画
 	if (IsAttack()) {
 		if (isAttackEffectVisible_) {
@@ -138,7 +207,6 @@ void Player::Draw() {
 		}
 	}
 
-	model_->Draw(worldTransform_, *camera_, &objectColor_);
 
 	Model::PostDraw();
 }
@@ -192,7 +260,7 @@ void Player::ChangeGroundState(const CollisionMapInfo& info) {
 		IndexSet indexSet = mapChipField_->GetMapChipIndexSetByPosition(leftBottom);
 		mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
 
-		if (mapChipType == MapChipType::kBlock) {
+		if (mapChipType == MapChipType::kBlock || mapChipField_->IsLadderTop(indexSet.xIndex, indexSet.yIndex)) {
 			isHit = true;
 		}
 
@@ -362,4 +430,62 @@ void Player::OnFallDeath() {
 	// 通常死亡として処理
 	deathType_ = DeathType::kNormal;
 	isDead_ = true;
+}
+
+
+bool Player::TryFinishLadderClimb() {
+	if (!mapChipField_) {
+		return false;
+	}
+
+	// 足元の座標を取得
+	Vector3 footPosition = worldTransform_.translation_;
+
+	// 足元より少し下のはしごを探す
+	footPosition.y -= height_ / 2.0f + 0.3f;
+
+	// 足元にあるマップチップを取得
+	IndexSet indexSet = mapChipField_->GetMapChipIndexSetByPosition(footPosition);
+
+	// はしごの最上段でなければ対象外
+	if (!mapChipField_->IsLadderTop(indexSet.xIndex, indexSet.yIndex)) {
+		return false;
+	}
+
+	// 最上段の上面を取得
+	Rect rect = mapChipField_->RectByIndex(indexSet.xIndex, indexSet.yIndex);
+
+	// 登り切り時に補正してよい高さか確認
+	float targetPositionY = rect.top + height_ / 2.0f + kBlank;
+
+	// プレイヤーの足が上端に近づくまでは乗り移らない
+	const float climbFinishDistance = 0.2f;
+
+	float distanceToTop = targetPositionY - worldTransform_.translation_.y;
+
+	if (distanceToTop < 0.0f || distanceToTop > climbFinishDistance) {
+		return false;
+	}
+
+	// 乗り移り先にブロックがないことを確認する
+	const Vector3 targetCenter{worldTransform_.translation_.x, targetPositionY, worldTransform_.translation_.z};
+
+	const Vector3 checkPositions[] = {targetCenter, CornerPosition(targetCenter, kLeftTop), CornerPosition(targetCenter, kRightTop)};
+
+	for (const Vector3& position : checkPositions) {
+		indexSet = mapChipField_->GetMapChipIndexSetByPosition(position);
+
+		if (mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex) == MapChipType::kBlock) {
+			return false;
+		}
+	}
+
+	// はしご上面に乗せる
+	worldTransform_.translation_.y = targetPositionY;
+
+	// 接地状態へ移行
+	velocity_ = {0.0f, 0.0f, 0.0f};
+	isGround_ = true;
+
+	return true;
 }

@@ -15,7 +15,8 @@ enum class MapChipType {
 	kBlank, // 空白
 	kBlock, // ブロック
 	kPlayer,
-	kEnemy
+	kEnemy,
+	kLadder, // はしご
 };
 
 // マップチップCSVの文字番号
@@ -53,6 +54,8 @@ class MapChipField {
 	uint32_t GetNumBlockHorizontal();
 	IndexSet GetMapChipIndexSetByPosition(const KamataEngine::Vector3& position);
 	Rect RectByIndex(uint32_t xIndex, uint32_t yIndex);
+	// はしごの最上段か
+	bool IsLadderTop(uint32_t xIndex, uint32_t yIndex);
 
   private:
 	MapChipData mapChipData_;

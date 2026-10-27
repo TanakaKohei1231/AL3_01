@@ -118,8 +118,14 @@ class GameScene : public IScene {
 
 	std::vector <std::vector<std::unique_ptr<KamataEngine::WorldTransform>>> worldTransformBlocks_;
 
-	uint32_t blockTextureHandle_ = 0;
-	std::unique_ptr<KamataEngine::Model> modelBlock_;
+	// ブロックモデル
+	KamataEngine::Model* modelBlock_ = nullptr;
+
+	// はしごモデル
+	KamataEngine::Model* modelLadder_ = nullptr;
+
+	// はしごのワールド変換
+	std::vector<std::unique_ptr<KamataEngine::WorldTransform>> worldTransformLadders_;
 
 	// 画面サイズ
 	const int kMaxWindowWidth = 1280;

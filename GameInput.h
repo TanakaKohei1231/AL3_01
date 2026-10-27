@@ -5,7 +5,9 @@
 enum class GameAction {
 	// ゲーム
 	kMoveLeft,     // 左移動
-	kMoveRight,    // 右移動
+	kMoveRight, // 右移動
+	kMoveUp, // 上移動
+	kMoveDown, // 下移動
 	kJump,         // ジャンプ
 	kAttack,       // 攻撃
 	kDash,         // ダッシュ

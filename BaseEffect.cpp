@@ -1,4 +1,5 @@
 #include "BaseEffect.h"
+#include <assert.h>
 
 using namespace KamataEngine;
 

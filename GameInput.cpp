@@ -38,11 +38,17 @@ bool GameInput::IsPressedRaw(std::array<BYTE, 256> keys, GameAction action) {
 	case GameAction::kMoveRight:
 		return keys[DIK_D];
 
-	case GameAction::kJump:
+	case GameAction::kMoveUp:
 		return keys[DIK_W];
 
-	case GameAction::kAttack:
+	case GameAction::kMoveDown:
+		return keys[DIK_S];
+
+	case GameAction::kJump:
 		return keys[DIK_SPACE];
+
+	case GameAction::kAttack:
+		return keys[DIK_J];
 
 	case GameAction::kDash:
 		return keys[DIK_LSHIFT];

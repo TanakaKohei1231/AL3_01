@@ -12,6 +12,7 @@ namespace {
 		{'P', MapChipType::kPlayer},
 		{'E', MapChipType::kEnemy},
 		{'L', MapChipType::kLadder},
+		{'G', MapChipType::kGoal},
 	};
 
 } // namespace

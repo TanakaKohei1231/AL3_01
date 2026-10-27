@@ -17,6 +17,7 @@ enum class MapChipType {
 	kPlayer,
 	kEnemy,
 	kLadder, // はしご
+	kGoal
 };
 
 // マップチップCSVの文字番号

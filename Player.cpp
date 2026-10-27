@@ -132,6 +132,9 @@ void Player::InitializeInternal() {
 	// 外部からのノックバック要求を初期化
 	isKnockbackRequested_ = false;
 
+	// クリア演出終了フラグを初期化
+	isClearDirectionFinished_ = false;
+
 	width_ = 0.8f;
 	height_ = 0.8f;
 }
@@ -488,4 +491,15 @@ bool Player::TryFinishLadderClimb() {
 	isGround_ = true;
 
 	return true;
+}
+
+void Player::StartClearDirection() {
+	// クリア演出を開始する
+	isClearDirectionFinished_ = false;
+
+	// はしごから離れた状態にする
+	isLadderClimbing_ = false;
+
+	// クリア演出への切り替えを要求
+	RequestBehaviorChange(std::make_unique<PlayerClearBehavior>(this));
 }

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <memory>
 #include "Ease.h"
+#include <cmath>
 
 using namespace KamataEngine;
 
@@ -503,4 +504,108 @@ void PlayerLadderBehavior::Update() {
 }
 
 void PlayerLadderBehavior::UpdateMotion() {
+}
+
+//============================================================
+// クリア演出状態
+//============================================================
+
+PlayerClearBehavior::PlayerClearBehavior(Player* player) : player_(player) {}
+
+void PlayerClearBehavior::Initialize() {
+	// 攻撃などによる変形をリセット
+	player_->worldTransform_.scale_ = {1.0f, 1.0f, 1.0f};
+	player_->isAttackEffectVisible_ = false;
+
+	// はしごやノックバックの状態を解除
+	player_->isLadderClimbing_ = false;
+	player_->isKnockbackRequested_ = false;
+	player_->SetKnockbackInvincible(false);
+
+	// クリア演出を初期化
+	player_->isClearDirectionFinished_ = false;
+	clearPhase_ = ClearPhase::kJump;
+	hasClearJumpStarted_ = false;
+	clearTurnParameter_ = 0.0f;
+
+	// 既存の旋回処理を停止
+	player_->turnTimer_ = 0.0f;
+
+	// 横方向の移動を止めてジャンプ
+	player_->SetVelocity({0.0f, kClearJumpVelocity, 0.0f});
+	player_->isGround_ = false;
+}
+
+void PlayerClearBehavior::Update() {
+	switch (clearPhase_) {
+	case ClearPhase::kJump: {
+		// 現在の移動速度
+		Vector3 velocity = player_->GetVelocity();
+
+		// 重力を適用
+		velocity.y -= Player::kGravityAcceleration;
+
+		// 最大落下速度を制限
+		velocity.y = std::max(velocity.y, -Player::kLimitFallSpeed);
+
+		player_->SetVelocity(velocity);
+
+		// 地形との衝突判定を行いながら移動
+		player_->ResolveMapChipCollision(velocity);
+
+		// 空中に出たことを記録
+		if (!player_->isGround_) {
+			hasClearJumpStarted_ = true;
+		}
+
+		// 一度ジャンプし、着地したら旋回へ
+		if (hasClearJumpStarted_ && player_->isGround_) {
+			player_->SetVelocity({0.0f, 0.0f, 0.0f});
+
+			clearPhase_ = ClearPhase::kTurn;
+			clearTurnParameter_ = 0.0f;
+
+			// 旋回開始角度
+			clearTurnStartRotationY_ = player_->worldTransform_.rotation_.y;
+
+			// 最短角度でカメラ側へ旋回する
+			float difference = std::remainder(kClearFrontRotationY - clearTurnStartRotationY_, 2.0f * kPi);
+
+			clearTurnTargetRotationY_ = clearTurnStartRotationY_ + difference;
+		}
+
+		break;
+	}
+
+	case ClearPhase::kTurn: {
+		// 旋回時間を進める
+		clearTurnParameter_ += 1.0f / 60.0f;
+
+		float t = std::clamp(clearTurnParameter_ / kClearTurnTime, 0.0f, 1.0f);
+
+		float easedT = Ease::EaseInOut(t);
+
+		// 正面へ旋回
+		player_->worldTransform_.rotation_.y = std::lerp(clearTurnStartRotationY_, clearTurnTargetRotationY_, easedT);
+
+		// 旋回終了
+		if (clearTurnParameter_ >= kClearTurnTime) {
+			player_->worldTransform_.rotation_.y = clearTurnTargetRotationY_;
+
+			player_->isClearDirectionFinished_ = true;
+			clearPhase_ = ClearPhase::kFinished;
+		}
+
+		break;
+	}
+
+	case ClearPhase::kFinished: {
+		// 演出終了後は何もしない
+		break;
+	}
+	}
+}
+
+void PlayerClearBehavior::UpdateMotion() {
+	// 現時点では専用モーションなし
 }

@@ -171,3 +171,44 @@ class PlayerLadderBehavior : public ICharactersBehavior {
 	// はしごから離れる際のジャンプ初速
 	static inline const float kJumpAcceleration = 0.8f;
 };
+
+//============================================================
+// クリア演出状態
+//============================================================
+class PlayerClearBehavior : public ICharactersBehavior {
+  public:
+	explicit PlayerClearBehavior(Player* player);
+
+	void Initialize() override;
+	void Update() override;
+	void UpdateMotion() override;
+
+  private:
+	// クリア演出の進行段階
+	enum class ClearPhase { kJump, kTurn, kFinished };
+
+	Player* player_ = nullptr;
+
+	ClearPhase clearPhase_ = ClearPhase::kJump;
+
+	// 一度空中へ出たか
+	bool hasClearJumpStarted_ = false;
+
+	// 旋回開始時の角度
+	float clearTurnStartRotationY_ = 0.0f;
+
+	// 最短経路で補正した旋回先の角度
+	float clearTurnTargetRotationY_ = 0.0f;
+
+	// 旋回の経過時間
+	float clearTurnParameter_ = 0.0f;
+
+	// クリアジャンプ初速
+	static inline const float kClearJumpVelocity = 0.7f;
+
+	// 正面を向くまでの時間
+	static inline const float kClearTurnTime = 0.5f;
+
+	// カメラ側を向く角度
+	static inline const float kClearFrontRotationY = kPi;
+};

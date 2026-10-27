@@ -11,6 +11,7 @@
 #include "Fade.h"
 #include <list>
 #include"BaseEffect.h"
+#include"Goal.h"
 
 // 前方宣言
 class HitEffect;
@@ -63,6 +64,9 @@ class GameScene : public IScene {
 	// デバッグカメラ
 	std::unique_ptr<KamataEngine::DebugCamera> debugCamera_;
 
+	// ゴール
+	std::unique_ptr<Goal> goal_;
+
 	// デバッグカメラの有効化フラグ
 	bool isDebugCameraActive_ = false;
 
@@ -74,6 +78,7 @@ class GameScene : public IScene {
 		kFadeIn,  // フェードイン
 		kPlay,    // ゲームプレイ
 		kDeath,   // デス演出
+		kClear,
 		kFadeOut, // フェードアウト
 	};
 
@@ -94,6 +99,18 @@ class GameScene : public IScene {
 
 	// フェーズ切り替え
 	void ChangePhase();
+
+	// ゴールとの接触判定
+	void CheckGoalCollision();
+
+	// クリア開始
+	void StartClear();
+
+	// クリア済みか
+	bool isCleared_ = false;
+
+	// クリア演出中の更新
+	void UpdateClearPhase();
 
 	// ヒットエフェクト
 	std::list<std::unique_ptr<BaseEffect>> effects_;

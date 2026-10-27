@@ -24,6 +24,8 @@ void GameScene::Initialize() {
 	// フェーズ初期化
 	phase_ = Phase::kFadeIn;
 
+	isCleared_ = false;
+
 	// カメラの初期化
 	camera_ = std::make_unique<Camera>();
 	camera_->farZ = 1100.0f;
@@ -106,8 +108,22 @@ void GameScene::Update() {
 		UpdateDeathPhase();
 		break;
 
+	case Phase::kClear:
+		UpdateClearPhase();
+		break;
+
 	case Phase::kFadeOut:
-		UpdateDeathPhase();
+		if (isCleared_) {
+			// クリア後はプレイヤーを動かさない
+			skydome_->Update();
+
+			if (!isDebugCameraActive_) {
+				cameraController_->Update();
+			}
+		} else {
+			UpdateDeathPhase();
+		}
+
 		fade_->Update();
 		break;
 	}
@@ -158,6 +174,11 @@ void GameScene::Draw() {
 
 
 	Model::PostDraw();
+
+	// ゴール描画
+	if (goal_) {
+		goal_->Draw();
+	}
 
 	player_->Draw();
 
@@ -240,6 +261,18 @@ void GameScene::GenerateFieldObjects() {
 
 				break;
 			}
+
+			// ゴール
+			case MapChipType::kGoal: {
+				// ゴールの二重配置を防止
+				assert(goal_ == nullptr && "ゴールを二重に配置しようとしています");
+
+				// ゴールを生成
+				goal_ = std::make_unique<Goal>();
+				goal_->Initialize(camera_.get(), mapPosition);
+
+				break;
+			}
 			}
 		}
 	}
@@ -297,6 +330,9 @@ void GameScene::CheckAllCollisions() {
 			enemy->OnCollision(player_.get());
 		}
 	}
+
+	// ゴールとの接触判定
+	CheckGoalCollision();
 }
 
 void GameScene::UpdatePlayPhase() {
@@ -319,6 +355,11 @@ void GameScene::UpdatePlayPhase() {
 	player_->SetScreenSqueezeDeathEnabled(cameraController_->GetMode() == CameraMode::kForcedScroll);
 
 	player_->Update();
+
+	// ゴールの浮遊・回転アニメーションを更新
+	if (goal_) {
+		goal_->Update();
+	}
 
 	// プレイヤーの落下死亡判定
 	player_->CheckFallDeath(kFallDeathY);
@@ -383,6 +424,12 @@ void GameScene::UpdatePlayPhase() {
 
 void GameScene::UpdateDeathPhase() {
 	player_->Update();
+
+	// ゴールの浮遊・回転アニメーションを更新
+	if (goal_) {
+		goal_->Update();
+	}
+
 	for (const auto& enemy : enemies_) {
 		enemy->Update();
 	}
@@ -405,6 +452,31 @@ void GameScene::UpdateDeathPhase() {
 
 	// ヒットエフェクトの更新
 	UpdateHitEffects();
+}
+
+void GameScene::UpdateClearPhase() {
+	// プレイヤーのクリア演出を更新
+	player_->Update();
+
+	// 背景を更新
+	skydome_->Update();
+
+	// カメラを更新
+	if (isDebugCameraActive_) {
+		debugCamera_->Update();
+
+		camera_->matView = debugCamera_->GetCamera().matView;
+		camera_->matProjection = debugCamera_->GetCamera().matProjection;
+		camera_->TransferMatrix();
+	} else {
+		cameraController_->Update();
+	}
+
+	// クリア演出が終わったらフェードアウト
+	if (player_->IsClearDirectionFinished()) {
+		phase_ = Phase::kFadeOut;
+		fade_->Start(Fade::Status::kFadeOut, 1.0f);
+	}
 }
 
 void GameScene::ChangePhase() {
@@ -477,4 +549,39 @@ void GameScene::DrawHitEffects() {
 	for (const auto& effect : effects_) {
 		effect->Draw();
 	}
+}
+
+void GameScene::CheckGoalCollision() {
+	// ゴールがない、または取得済みなら判定しない
+	if (!goal_ || goal_->IsCollected()) {
+		return;
+	}
+
+	// 死亡しているプレイヤーはゴールできない
+	if (player_->IsDead()) {
+		return;
+	}
+
+	// プレイヤーとゴールの接触判定
+	if (IsCollision(player_->GetAABB(), goal_->GetAABB())) {
+		StartClear();
+	}
+}
+
+void GameScene::StartClear() {
+	// すでにクリアしていれば何もしない
+	if (isCleared_) {
+		return;
+	}
+
+	isCleared_ = true;
+
+	// ゴールを取得済みにする
+	goal_->Collect();
+
+	// プレイヤーのクリア演出を開始
+	player_->StartClearDirection();
+
+	// クリアフェーズへ
+	phase_ = Phase::kClear;
 }

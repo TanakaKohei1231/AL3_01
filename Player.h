@@ -58,6 +58,12 @@ class Player : public BaseCharacter {
 	// はしごから離れたときの旋回
 	void TurnFromLadder();
 
+	// クリア演出を開始
+	void StartClearDirection();
+
+	// クリア演出が終了したか
+	bool IsClearDirectionFinished() const { return isClearDirectionFinished_; }
+
   private:
 
 	// プレイヤー固有の初期化
@@ -107,6 +113,9 @@ class Player : public BaseCharacter {
 
 	// はしご中の背面角度
 	static inline const float kLadderRotationY = 0.0f;
+
+	// クリア演出終了フラグ
+	bool isClearDirectionFinished_ = false;
 
 	//============================================================
 	// 死亡周り
@@ -224,4 +233,5 @@ class Player : public BaseCharacter {
 	friend class PlayerKnockbackBehavior;
 	friend class PlayerSqueezeDeathBehavior;
 	friend class PlayerLadderBehavior;
+	friend class PlayerClearBehavior;
 };

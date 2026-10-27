@@ -10,7 +10,7 @@ using namespace KamataEngine;
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// エンジンの初期化
-	Initialize(L"LE2C_18_タナカ_コウヘイ");
+	Initialize(L"LE2C_18_タナカ_コウヘイ_マジョ子の冒険");
 	
 	// DirectXCommonインスタンスの取得
 	DirectXCommon* dXCommon = DirectXCommon::GetInstance();

@@ -281,6 +281,24 @@ void GameScene::GenerateFieldObjects() {
 	}
 }
 
+bool GameScene::IsEnemyInUpdateRange(const BaseEnemy& enemy) const {
+	// 敵のあたり判定範囲
+	AABB enemyAABB = enemy.GetAABB();
+
+	// カメラを基準に更新範囲を計算
+	float left = camera_->translation_.x + kEnemyUpdateRangeLeft - kEnemyUpdateMargin;
+	float right = camera_->translation_.x + kEnemyUpdateRangeRight + kEnemyUpdateMargin;
+	float bottom = camera_->translation_.y + kEnemyUpdateRangeBottom - kEnemyUpdateMargin;
+	float top = camera_->translation_.y + kEnemyUpdateRangeTop + kEnemyUpdateMargin;
+
+	// 更新範囲と敵のAABBが重なっているか
+	if (enemyAABB.max.x < left || enemyAABB.min.x > right || enemyAABB.max.y < bottom || enemyAABB.min.y > top) {
+		return false;
+	}
+
+	return true;
+}
+
 void GameScene::GenerateEnemy(Vector3 &position,uint8_t type) {
 	switch (static_cast<EnemySpawnType>(type)) {
 		// 歩行敵の生成
@@ -368,6 +386,11 @@ void GameScene::UpdatePlayPhase() {
 	player_->CheckFallDeath(kFallDeathY);
 
 	for (const auto& enemy : enemies_) {
+		// 画面外の敵は更新しない
+		if (!IsEnemyInUpdateRange(*enemy)) {
+			continue;
+		}
+
 		enemy->Update();
 
 		// 敵の落下死亡判定

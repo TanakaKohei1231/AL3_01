@@ -144,6 +144,18 @@ class GameScene : public IScene {
 	// はしごのワールド変換
 	std::vector<std::unique_ptr<KamataEngine::WorldTransform>> worldTransformLadders_;
 
+	// 敵が更新対象の範囲内にいるか
+	bool IsEnemyInUpdateRange(const BaseEnemy& enemy) const;
+
+	// カメラを基準とする敵の更新範囲
+	static inline const float kEnemyUpdateRangeLeft = -11.0f;
+	static inline const float kEnemyUpdateRangeRight = 11.0f;
+	static inline const float kEnemyUpdateRangeBottom = -8.0f;
+	static inline const float kEnemyUpdateRangeTop = 10.0f;
+
+	// 画面外でも少し余裕を持って更新する距離
+	static inline const float kEnemyUpdateMargin = 2.0f;
+
 	// 画面サイズ
 	const int kMaxWindowWidth = 1280;
 	const int kMaxWindowHeight = 720;
